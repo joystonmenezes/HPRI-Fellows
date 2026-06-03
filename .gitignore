@@ -1,0 +1,38 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env
+.env*.local
+
+# Firebase service-account credentials — NEVER commit
+service-account.json
+*service-account*.json
+
+# submissions store & uploaded files (created at runtime, keep private)
+/data/
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# Claude Code local settings (machine-specific, not for sharing)
+.claude/settings.local.json

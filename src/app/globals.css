@@ -1,0 +1,106 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --usc-cardinal: #990000;
+  --usc-gold: #ffcc00;
+}
+
+html {
+  scroll-behavior: smooth;
+  /* offset anchor jumps so the sticky header doesn't cover section titles */
+  scroll-padding-top: 6.5rem;
+}
+
+body {
+  @apply bg-neutral-50 text-neutral-800 font-sans antialiased;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* Visible keyboard focus for accessibility */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 3px solid var(--usc-gold);
+  outline-offset: 2px;
+}
+
+/* ── Tasteful, formal motion ──────────────────────────────────────────────── */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slowZoom {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.08);
+  }
+}
+
+/* Staggered entrance for the banner text (delays set inline per element). */
+.animate-fade-up {
+  opacity: 0;
+  animation: fadeUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Slow "ken burns" drift on the banner image. */
+.animate-slow-zoom {
+  animation: slowZoom 20s ease-out both;
+}
+
+/* Respect users who prefer reduced motion: show everything, animate nothing.
+   (Without this, fade-up elements would stay invisible for those users.) */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+  }
+  .animate-slow-zoom {
+    animation: none !important;
+  }
+}
+
+/* ── On-scroll reveal for main sections ───────────────────────────────────── */
+/* Elements are visible by default; ScrollReveal adds `reveal-pending` (hidden)
+   only to below-the-fold items, then `reveal-in` as they enter the viewport. */
+.reveal {
+  transition:
+    opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.reveal-pending {
+  opacity: 0;
+  transform: translateY(28px);
+}
+.reveal-in {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal-pending,
+  .reveal-in {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
