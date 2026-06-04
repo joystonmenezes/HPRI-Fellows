@@ -8,6 +8,7 @@ import {
   type ReactNode,
   type FormEvent,
 } from "react";
+import { type SectionConfig, SECTION_LABELS } from "@/content/sections";
 
 const labelClass = "block text-sm font-semibold text-neutral-800";
 const inputClass =
@@ -142,6 +143,125 @@ function CollapsibleForm({
         {body}
       </form>
     </details>
+  );
+}
+
+// Page layout manager: reorder the main content sections and choose which ones
+// appear on the public site. Order + visibility are saved together and drive
+// both the public page and the floating nav.
+export function SectionsEditor({ initial }: { initial: SectionConfig[] }) {
+  const [rows, setRows] = useState<SectionConfig[]>(initial.map((r) => ({ ...r })));
+  const { status, error, setStatus, save } = useSaver();
+  const touch = () => setStatus("idle");
+
+  function move(i: number, dir: -1 | 1) {
+    const j = i + dir;
+    if (j < 0 || j >= rows.length) return;
+    setRows((prev) => {
+      const next = [...prev];
+      [next[i], next[j]] = [next[j], next[i]];
+      return next;
+    });
+    touch();
+  }
+
+  function toggle(i: number) {
+    setRows((prev) =>
+      prev.map((r, idx) => (idx === i ? { ...r, published: !r.published } : r)),
+    );
+    touch();
+  }
+
+  return (
+    <CollapsibleForm
+      id="sections"
+      onSubmit={(e) => {
+        e.preventDefault();
+        save({ sections: rows });
+      }}
+    >
+      <h2 className="font-serif text-xl font-bold text-cardinal">Page layout</h2>
+      <p className="mt-1 text-sm text-neutral-600">
+        Reorder the main sections with the arrows, and untick “Show on site” to
+        hide a whole section (it stays here so you can bring it back any time).
+        The hero banner, news band, and footer always stay in place.
+      </p>
+      <ul className="mt-4 space-y-2">
+        {rows.map((r, i) => (
+          <li
+            key={r.key}
+            className="flex items-center gap-3 rounded-md border border-neutral-200 bg-white px-3 py-2 shadow-sm"
+          >
+            <div className="flex flex-col gap-0.5">
+              <button
+                type="button"
+                onClick={() => move(i, -1)}
+                disabled={i === 0}
+                aria-label={`Move ${SECTION_LABELS[r.key]} up`}
+                className="rounded p-0.5 text-neutral-500 transition hover:bg-neutral-100 hover:text-cardinal disabled:opacity-30 disabled:hover:bg-transparent"
+              >
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className="h-4 w-4"
+                >
+                  <path
+                    d="M5 12.5l5-5 5 5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={() => move(i, 1)}
+                disabled={i === rows.length - 1}
+                aria-label={`Move ${SECTION_LABELS[r.key]} down`}
+                className="rounded p-0.5 text-neutral-500 transition hover:bg-neutral-100 hover:text-cardinal disabled:opacity-30 disabled:hover:bg-transparent"
+              >
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className="h-4 w-4"
+                >
+                  <path
+                    d="M5 7.5l5 5 5-5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+            </div>
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-xs font-semibold text-neutral-500">
+              {i + 1}
+            </span>
+            <span
+              className={`grow font-medium ${
+                r.published ? "text-neutral-900" : "text-neutral-400 line-through"
+              }`}
+            >
+              {SECTION_LABELS[r.key]}
+            </span>
+            <label className="flex shrink-0 cursor-pointer items-center gap-2 text-sm text-neutral-600">
+              <input
+                type="checkbox"
+                checked={r.published}
+                onChange={() => toggle(i)}
+                className="h-4 w-4 rounded border-neutral-300 text-cardinal focus:ring-cardinal"
+              />
+              Show on site
+            </label>
+          </li>
+        ))}
+      </ul>
+      <SaveBar status={status} error={error} />
+    </CollapsibleForm>
   );
 }
 
@@ -1568,7 +1688,6 @@ export function CapstoneEditor({
   const [intro, setIntro] = useState(initial.intro);
   const [slideFlow, setSlideFlow] = useState<string[]>([...initial.slideFlow]);
   const [linkRow, setLinkRow] = useState<LinkRow>(toRow(initial.guideLink));
-  const [published, setPublished] = useState(initial.published !== false);
   const { status, error, setStatus, save } = useSaver();
   const touch = () => setStatus("idle");
 
@@ -1581,7 +1700,8 @@ export function CapstoneEditor({
             intro: intro.trim(),
             slideFlow: slideFlow.map((s) => s.trim()).filter(Boolean),
             guideLink: fromRow(linkRow),
-            published,
+            // Capstone visibility is now controlled from the Page layout card.
+            published: true,
           },
         });
       }}
@@ -1590,20 +1710,8 @@ export function CapstoneEditor({
       <SectionHeading title="Capstone" count={slideFlow.length} />
       <p className={sectionLead}>
         The intro paragraph, the numbered recommended slide flow, and the guide
-        link.
+        link. Use the Page layout card at the top to show or hide this section.
       </p>
-      <label className="mt-3 flex select-none items-center gap-2 rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm font-medium text-neutral-700">
-        <input
-          type="checkbox"
-          className="h-4 w-4 rounded border-neutral-300 text-cardinal focus:ring-cardinal"
-          checked={published}
-          onChange={(e) => {
-            setPublished(e.target.checked);
-            touch();
-          }}
-        />
-        Show the Capstone section on the public site
-      </label>
       <div className="mt-4">
         <label className={labelClass}>Intro</label>
         <textarea

@@ -11,6 +11,11 @@ import {
 } from "@/content/program";
 import { getDb } from "@/lib/firebase";
 import { type SubmitState } from "@/lib/datetime";
+import {
+  type SectionConfig,
+  defaultSections,
+  normalizeSections,
+} from "@/content/sections";
 
 // Runtime-editable site content for the WHOLE page. Defaults come from
 // program.ts. Once an admin saves edits they are stored in Firestore
@@ -31,6 +36,9 @@ export type GlanceRow = { label: string; value: string };
 export type LocationBlock = { name: string; lines: string[] };
 
 export type SiteContent = {
+  // Order + show/hide for the main content sections (drives the public page and
+  // the floating nav). See src/content/sections.ts for the section registry.
+  sections: SectionConfig[];
   // Hero / header
   term: string;
   dateRange: string;
@@ -79,6 +87,7 @@ function link(l: Link): Link {
 
 export function defaultContent(): SiteContent {
   return {
+    sections: defaultSections(),
     term: program.term,
     dateRange: program.dateRange,
     tagline: program.tagline,
@@ -355,6 +364,7 @@ function cleanLocations(v: unknown): LocationBlock[] {
 
 function mergeContent(d: SiteContent, s: Partial<SiteContent>): SiteContent {
   return {
+    sections: s.sections ? normalizeSections(s.sections) : d.sections,
     term: has(s.term) ? clampStr(s.term, 80).trim() : d.term,
     dateRange: has(s.dateRange) ? clampStr(s.dateRange, 120).trim() : d.dateRange,
     tagline: has(s.tagline) ? clampStr(s.tagline, 200).trim() : d.tagline,
@@ -506,6 +516,7 @@ export async function saveContent(patch: Partial<SiteContent>): Promise<SiteCont
   const current = await getContent();
   const clean: Partial<SiteContent> = {};
 
+  if ("sections" in patch) clean.sections = normalizeSections(patch.sections);
   if ("term" in patch) clean.term = clampStr(patch.term, 80).trim();
   if ("dateRange" in patch) clean.dateRange = clampStr(patch.dateRange, 120).trim();
   if ("tagline" in patch) clean.tagline = clampStr(patch.tagline, 200).trim();

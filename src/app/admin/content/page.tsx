@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import { getContent } from "@/lib/content";
 import {
   AccordionProvider,
+  SectionsEditor,
   BasicsEditor,
   QuickLinksEditor,
   AnnouncementsEditor,
@@ -67,6 +68,7 @@ export default async function AdminContentPage() {
           <span className="text-cardinal">
             {[
               ["news", "News"],
+              ["sections", "Page layout"],
               ["basics", "Header & intro"],
               ["links", "Quick links"],
               ["glance", "At a glance"],
@@ -88,9 +90,12 @@ export default async function AdminContentPage() {
           </span>
         </nav>
 
-        <AccordionProvider defaultOpenIds={["news", "basics"]}>
+        <AccordionProvider defaultOpenIds={["news"]}>
         <section id="edit-news" className="scroll-mt-4">
           <AnnouncementsEditor initial={c.announcements} />
+        </section>
+        <section id="edit-sections" className="scroll-mt-4">
+          <SectionsEditor initial={c.sections} />
         </section>
         <section id="edit-basics" className="scroll-mt-4">
           <BasicsEditor

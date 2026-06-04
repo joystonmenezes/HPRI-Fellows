@@ -1,10 +1,16 @@
-import { nav } from "@/content/program";
-
 // A slim section-navigation band that sits just below the hero and then sticks
 // to the top (just under the cardinal header) once you scroll past it. The gold
 // backdrop uses a few blurred shapes for an abstract feel; the links stay as
 // cardinal-on-white pills so they read clearly against the gold.
-export function SectionNav() {
+//
+// Items are passed in from the page so the nav mirrors the admin-chosen section
+// order and only links to sections that are currently visible.
+export function SectionNav({
+  items,
+}: {
+  items: { label: string; href: string }[];
+}) {
+  if (items.length === 0) return null;
   return (
     <nav
       aria-label="Page sections"
@@ -22,7 +28,7 @@ export function SectionNav() {
 
       <div className="mx-auto max-w-content px-4">
         <ul className="flex flex-nowrap items-center gap-2 overflow-x-auto py-2.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {nav.map((n) => (
+          {items.map((n) => (
             <li key={n.href} className="shrink-0">
               <a
                 href={n.href}
