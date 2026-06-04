@@ -4,12 +4,21 @@ import { useEffect, useState } from "react";
 
 // The hero background. With no admin-set photos it falls back to the bundled
 // /banner.jpg (the original look). With one photo it shows that photo; with
-// several it cross-fades through them like a photo story, advancing every two
-// seconds. The cardinal wash and bottom darkening keep the white title readable.
-export function HeroBanner({ images }: { images: string[] }) {
+// several it cross-fades through them like a photo story, advancing on the
+// admin-set timer (default two seconds). The cardinal wash and bottom darkening
+// keep the white title readable.
+export function HeroBanner({
+  images,
+  seconds = 2,
+}: {
+  images: string[];
+  seconds?: number;
+}) {
   const slides = images.length > 0 ? images : ["/banner.jpg"];
   const key = slides.join("|");
   const count = slides.length;
+  // Clamp to a sane floor so a tiny value can't spin the slideshow too fast.
+  const intervalMs = Math.max(1, seconds) * 1000;
   const [idx, setIdx] = useState(0);
 
   useEffect(() => {
@@ -17,9 +26,9 @@ export function HeroBanner({ images }: { images: string[] }) {
     // when there is more than one to show.
     setIdx(0);
     if (count < 2) return;
-    const timer = setInterval(() => setIdx((i) => (i + 1) % count), 2000);
+    const timer = setInterval(() => setIdx((i) => (i + 1) % count), intervalMs);
     return () => clearInterval(timer);
-  }, [key, count]);
+  }, [key, count, intervalMs]);
 
   return (
     <div

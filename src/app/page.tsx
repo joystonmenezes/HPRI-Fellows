@@ -397,7 +397,7 @@ export default async function Home() {
         {/* Background: cardinal gradient base (shows even if a photo is missing),
             then the admin-chosen banner photo(s) — a slideshow when there are
             several — with a cardinal overlay so the white title stays readable. */}
-        <HeroBanner images={content.bannerImages} />
+        <HeroBanner images={content.bannerImages} seconds={content.bannerSeconds} />
 
         <div className="mx-auto max-w-content px-4 py-20 sm:py-28">
           <div className="max-w-3xl">

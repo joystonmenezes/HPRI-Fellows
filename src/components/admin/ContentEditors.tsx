@@ -226,17 +226,6 @@ export function SectionsEditor({ initial }: { initial: SectionConfig[] }) {
   const { status, error, setStatus, save } = useSaver();
   const touch = () => setStatus("idle");
 
-  function move(i: number, dir: -1 | 1) {
-    const j = i + dir;
-    if (j < 0 || j >= rows.length) return;
-    setRows((prev) => {
-      const next = [...prev];
-      [next[i], next[j]] = [next[j], next[i]];
-      return next;
-    });
-    touch();
-  }
-
   function toggle(i: number) {
     setRows((prev) =>
       prev.map((r, idx) => (idx === i ? { ...r, published: !r.published } : r)),
@@ -259,10 +248,10 @@ export function SectionsEditor({ initial }: { initial: SectionConfig[] }) {
     >
       <h2 className="font-serif text-xl font-bold text-cardinal">Page layout</h2>
       <p className="mt-1 text-sm text-neutral-600">
-        Drag a section by its handle to drop it exactly where you want (or nudge
-        it with the arrows), and untick “Show on site” to hide a whole section
-        (it stays here so you can bring it back any time). The hero banner, news
-        band, and footer always stay in place.
+        Drag a section by its handle to drop it exactly where you want, and
+        untick “Show on site” to hide a whole section (it stays here so you can
+        bring it back any time). The hero banner, news band, and footer always
+        stay in place.
       </p>
       <ul className="mt-4 space-y-2">
         {rows.map((r, i) => (
@@ -280,56 +269,10 @@ export function SectionsEditor({ initial }: { initial: SectionConfig[] }) {
             <span
               aria-hidden="true"
               title="Drag to reorder"
-              className="shrink-0 text-neutral-300"
+              className="shrink-0 cursor-grab text-neutral-400 active:cursor-grabbing"
             >
               <GripIcon />
             </span>
-            <div className="flex flex-col gap-0.5">
-              <button
-                type="button"
-                onClick={() => move(i, -1)}
-                disabled={i === 0}
-                aria-label={`Move ${SECTION_LABELS[r.key]} up`}
-                className="rounded p-0.5 text-neutral-500 transition hover:bg-neutral-100 hover:text-cardinal disabled:opacity-30 disabled:hover:bg-transparent"
-              >
-                <svg
-                  aria-hidden="true"
-                  viewBox="0 0 20 20"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  className="h-4 w-4"
-                >
-                  <path
-                    d="M5 12.5l5-5 5 5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </button>
-              <button
-                type="button"
-                onClick={() => move(i, 1)}
-                disabled={i === rows.length - 1}
-                aria-label={`Move ${SECTION_LABELS[r.key]} down`}
-                className="rounded p-0.5 text-neutral-500 transition hover:bg-neutral-100 hover:text-cardinal disabled:opacity-30 disabled:hover:bg-transparent"
-              >
-                <svg
-                  aria-hidden="true"
-                  viewBox="0 0 20 20"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  className="h-4 w-4"
-                >
-                  <path
-                    d="M5 7.5l5 5 5-5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </button>
-            </div>
             <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-xs font-semibold text-neutral-500">
               {i + 1}
             </span>
@@ -360,8 +303,15 @@ export function SectionsEditor({ initial }: { initial: SectionConfig[] }) {
 // Banner photos: upload images or paste links for the hero. Several photos play
 // as a slideshow on the public site; drag to reorder; with none the bundled
 // banner photo is used.
-export function BannerEditor({ initial }: { initial: string[] }) {
+export function BannerEditor({
+  initial,
+  seconds: initialSeconds,
+}: {
+  initial: string[];
+  seconds: number;
+}) {
   const [rows, setRows] = useState<string[]>(initial.slice());
+  const [seconds, setSeconds] = useState<string>(String(initialSeconds));
   const [urlInput, setUrlInput] = useState("");
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
@@ -414,7 +364,7 @@ export function BannerEditor({ initial }: { initial: string[] }) {
       id="banner"
       onSubmit={(e) => {
         e.preventDefault();
-        save({ bannerImages: rows });
+        save({ bannerImages: rows, bannerSeconds: parseFloat(seconds) || 2 });
       }}
     >
       <h2 className="font-serif text-xl font-bold text-cardinal">
@@ -422,9 +372,9 @@ export function BannerEditor({ initial }: { initial: string[] }) {
       </h2>
       <p className="mt-1 text-sm text-neutral-600">
         Photos for the big banner at the top of the page. Add several and they
-        play as a slideshow — fading from one to the next every couple of
-        seconds, like a photo story. With none, the built-in banner photo is
-        used. Drag to set the order, then press “Save changes”.
+        play as a slideshow — fading from one to the next, like a photo story
+        (set the speed below). With none, the built-in banner photo is used.
+        Drag to set the order, then press “Save changes”.
       </p>
 
       {rows.length === 0 ? (
@@ -518,6 +468,31 @@ export function BannerEditor({ initial }: { initial: string[] }) {
               Add
             </button>
           </div>
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <label htmlFor="banner-seconds" className={labelClass}>
+          Slideshow speed
+        </label>
+        <div className="mt-1 flex items-center gap-2">
+          <input
+            id="banner-seconds"
+            type="number"
+            min={1}
+            max={30}
+            step={0.5}
+            value={seconds}
+            onChange={(e) => {
+              setSeconds(e.target.value);
+              touch();
+            }}
+            className="w-24 rounded-md border border-neutral-300 px-3 py-2 text-sm shadow-sm focus:border-cardinal focus:outline-none"
+          />
+          <span className="text-sm text-neutral-500">
+            seconds each photo shows before fading to the next (only with 2+
+            photos)
+          </span>
         </div>
       </div>
 

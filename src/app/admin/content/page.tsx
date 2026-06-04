@@ -100,7 +100,7 @@ export default async function AdminContentPage() {
           <AnnouncementsEditor initial={c.announcements} />
         </section>
         <section id="edit-banner" className="scroll-mt-4">
-          <BannerEditor initial={c.bannerImages} />
+          <BannerEditor initial={c.bannerImages} seconds={c.bannerSeconds} />
         </section>
         <section id="edit-basics" className="scroll-mt-4">
           <BasicsEditor

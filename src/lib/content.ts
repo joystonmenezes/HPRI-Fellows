@@ -47,6 +47,9 @@ export type SiteContent = {
   // Hero banner photos. Empty → the bundled /banner.jpg is shown. One → a single
   // photo; several → a slideshow that fades between them every couple of seconds.
   bannerImages: string[];
+  // Seconds each banner photo shows before fading to the next (slideshow speed).
+  // Only matters with 2+ photos. Admin-editable; defaults to 2.
+  bannerSeconds: number;
   quickLinks: Link[];
   announcements: Announcement[];
   // Program at a glance
@@ -96,6 +99,7 @@ export function defaultContent(): SiteContent {
     tagline: program.tagline,
     intro: program.intro,
     bannerImages: [],
+    bannerSeconds: 2,
     quickLinks: program.quickLinks.map((l) => ({ ...link(l), published: true })),
     announcements: [],
     glance: {
@@ -215,6 +219,14 @@ function cleanBannerImages(v: unknown): string[] {
     .map(safeImageUrl)
     .filter((s): s is string => Boolean(s))
     .slice(0, 12);
+}
+
+// Slideshow speed in seconds. Clamped to a sane range so a stray value can't
+// freeze the slideshow or flash it too fast. Defaults to 2 when missing/invalid.
+function cleanBannerSeconds(v: unknown): number {
+  const n = typeof v === "number" ? v : parseFloat(String(v));
+  if (!Number.isFinite(n)) return 2;
+  return Math.min(30, Math.max(1, Math.round(n * 10) / 10));
 }
 
 // Quick links carry a publish flag (unlike the "materials" links, which use
@@ -394,6 +406,10 @@ function mergeContent(d: SiteContent, s: Partial<SiteContent>): SiteContent {
     bannerImages: Array.isArray(s.bannerImages)
       ? cleanBannerImages(s.bannerImages)
       : d.bannerImages,
+    bannerSeconds:
+      s.bannerSeconds !== undefined
+        ? cleanBannerSeconds(s.bannerSeconds)
+        : d.bannerSeconds,
     quickLinks: Array.isArray(s.quickLinks) ? cleanQuickLinks(s.quickLinks) : d.quickLinks,
     announcements: Array.isArray(s.announcements)
       ? cleanAnnouncements(s.announcements)
@@ -572,6 +588,7 @@ export async function saveContent(patch: Partial<SiteContent>): Promise<SiteCont
   if ("tagline" in patch) clean.tagline = clampStr(patch.tagline, 200).trim();
   if ("intro" in patch) clean.intro = clampStr(patch.intro, 4000).trim();
   if ("bannerImages" in patch) clean.bannerImages = cleanBannerImages(patch.bannerImages);
+  if ("bannerSeconds" in patch) clean.bannerSeconds = cleanBannerSeconds(patch.bannerSeconds);
   if ("quickLinks" in patch) clean.quickLinks = cleanQuickLinks(patch.quickLinks);
   if ("announcements" in patch) clean.announcements = cleanAnnouncements(patch.announcements);
   if ("glance" in patch)
