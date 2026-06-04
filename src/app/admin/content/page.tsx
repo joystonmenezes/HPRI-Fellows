@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { getContent } from "@/lib/content";
 import {
+  AccordionProvider,
   BasicsEditor,
   QuickLinksEditor,
   AnnouncementsEditor,
@@ -87,6 +88,7 @@ export default async function AdminContentPage() {
           </span>
         </nav>
 
+        <AccordionProvider defaultOpenIds={["news", "basics"]}>
         <section id="edit-news" className="scroll-mt-4">
           <AnnouncementsEditor initial={c.announcements} />
         </section>
@@ -127,6 +129,7 @@ export default async function AdminContentPage() {
         <section id="edit-contacts" className="scroll-mt-4">
           <ContactsEditor initial={c.contacts} />
         </section>
+        </AccordionProvider>
       </main>
     </div>
   );

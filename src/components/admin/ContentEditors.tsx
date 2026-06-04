@@ -1,6 +1,13 @@
 "use client";
 
-import { useState, Children, type ReactNode, type FormEvent } from "react";
+import {
+  useState,
+  Children,
+  createContext,
+  useContext,
+  type ReactNode,
+  type FormEvent,
+} from "react";
 
 const labelClass = "block text-sm font-semibold text-neutral-800";
 const inputClass =
@@ -57,22 +64,68 @@ function useSaver() {
   return { status, error, setStatus, save };
 }
 
+// Accordion coordination: a provider tracks which section cards are open so the
+// page can start with a couple expanded and collapse the rest when another is
+// opened. Each CollapsibleForm reports its own id and reads its open state here.
+type AccordionState = {
+  isOpen: (id: string) => boolean;
+  toggle: (id: string) => void;
+};
+
+const AccordionCtx = createContext<AccordionState | null>(null);
+
+export function AccordionProvider({
+  defaultOpenIds = [],
+  children,
+}: {
+  defaultOpenIds?: string[];
+  children: ReactNode;
+}) {
+  // Start with the requested cards open; once the user opens a different card we
+  // switch to single-open so only one section is expanded at a time.
+  const [openIds, setOpenIds] = useState<string[]>(defaultOpenIds);
+  const toggle = (id: string) =>
+    setOpenIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [id]));
+  const isOpen = (id: string) => openIds.includes(id);
+  return (
+    <AccordionCtx.Provider value={{ isOpen, toggle }}>{children}</AccordionCtx.Provider>
+  );
+}
+
 // A section card that collapses. The first child (the section heading) stays
 // visible as the clickable summary; the rest is shown only when expanded. Inputs
-// stay mounted while collapsed, so unsaved edits are preserved.
+// stay mounted while collapsed, so unsaved edits are preserved. When wrapped in an
+// AccordionProvider, open/close is driven by shared state (preventDefault stops the
+// native <details> toggle so React stays the single source of truth).
 function CollapsibleForm({
+  id,
   onSubmit,
   children,
 }: {
+  id: string;
   onSubmit: (e: FormEvent<HTMLFormElement>) => void;
   children: ReactNode;
 }) {
+  const acc = useContext(AccordionCtx);
   const items = Children.toArray(children);
   const heading = items[0];
   const body = items.slice(1);
   return (
-    <details className="rounded-lg border border-neutral-200 bg-white shadow-sm [&[open]_svg]:rotate-180">
-      <summary className="flex cursor-pointer list-none items-center gap-3 rounded-lg px-5 py-4 transition hover:bg-neutral-50/60 [&::-webkit-details-marker]:hidden">
+    <details
+      open={acc ? acc.isOpen(id) : undefined}
+      className="rounded-lg border border-neutral-200 bg-white shadow-sm [&[open]_svg]:rotate-180"
+    >
+      <summary
+        onClick={
+          acc
+            ? (e) => {
+                e.preventDefault();
+                acc.toggle(id);
+              }
+            : undefined
+        }
+        className="flex cursor-pointer list-none items-center gap-3 rounded-lg px-5 py-4 transition hover:bg-neutral-50/60 [&::-webkit-details-marker]:hidden"
+      >
         <span className="min-w-0 grow">{heading}</span>
         <svg
           aria-hidden="true"
@@ -110,6 +163,7 @@ export function BasicsEditor({
         e.preventDefault();
         save({ term, dateRange, tagline, intro });
       }}
+      id="basics"
     >
       <h2 className="font-serif text-xl font-bold text-cardinal">
         Header &amp; intro
@@ -216,6 +270,7 @@ export function QuickLinksEditor({
           .filter((r) => r.label);
         save({ quickLinks });
       }}
+      id="links"
     >
       <h2 className="font-serif text-xl font-bold text-cardinal">Quick links</h2>
       <p className="mt-1 text-sm text-neutral-600">
@@ -312,6 +367,7 @@ export function AnnouncementsEditor({
         e.preventDefault();
         save({ announcements: items });
       }}
+      id="news"
     >
       <div className="flex items-baseline justify-between">
         <h2 className="font-serif text-xl font-bold text-cardinal">
@@ -638,6 +694,7 @@ export function GlanceEditor({
           .filter((r) => r.label || r.value);
         save({ glance: { rows: clean, note: note.trim() } });
       }}
+      id="glance"
     >
       <SectionHeading title="Program at a glance" count={rows.length} />
       <p className={sectionLead}>
@@ -785,6 +842,7 @@ export function PresentationsEditor({
           );
         save({ presentations: { intro: intro.trim(), missedNote: missedNote.trim(), schedule } });
       }}
+      id="presentations"
     >
       <SectionHeading title="Presentations & schedule" count={rows.length} />
       <p className={sectionLead}>
@@ -952,6 +1010,7 @@ export function RulesEditor({
           },
         });
       }}
+      id="rules"
     >
       <SectionHeading title="Rules & expectations" count={expectations.length} />
       <p className={sectionLead}>
@@ -1057,6 +1116,7 @@ export function MentorsEditor({
           .filter((r) => r.fellow || r.primary || r.secondary || r.area);
         save({ mentors: { intro: intro.trim(), rows: clean, link: fromRow(linkRow) } });
       }}
+      id="mentors"
     >
       <SectionHeading title="Mentors" count={rows.length} />
       <p className={sectionLead}>
@@ -1210,6 +1270,7 @@ export function ActivitiesEditor({
           },
         });
       }}
+      id="activities"
     >
       <SectionHeading title="Self-directed activities" count={rows.length} />
       <p className={sectionLead}>
@@ -1362,6 +1423,7 @@ export function AssignmentsEditor({
           .filter((r) => r.assignment);
         save({ assignments: { intro: intro.trim(), rows: clean, link: fromRow(linkRow) } });
       }}
+      id="assignments"
     >
       <SectionHeading title="Assignments" count={rows.length} />
       <p className={sectionLead}>
@@ -1523,6 +1585,7 @@ export function CapstoneEditor({
           },
         });
       }}
+      id="capstone"
     >
       <SectionHeading title="Capstone" count={slideFlow.length} />
       <p className={sectionLead}>
@@ -1655,6 +1718,7 @@ export function ContactsEditor({
           .filter((l) => l.name || l.lines.length);
         save({ contacts: { rows: cleanRows, locations: cleanLocs } });
       }}
+      id="contacts"
     >
       <SectionHeading title="Contacts & addresses" count={rows.length} />
       <p className={sectionLead}>
