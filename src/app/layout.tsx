@@ -4,11 +4,11 @@ import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL("https://hpri-summer-fellows.example.org"),
   title: {
-    default: "HPRI Summer Fellows Program | Summer 2026",
-    template: "%s | HPRI Summer Fellows Program",
+    default: "HPRI Summer Fellowship Program | Summer 2026",
+    template: "%s | HPRI Summer Fellowship Program",
   },
   description:
-    "The HPRI Summer Fellows Program is a six-week hybrid learning experience in homelessness research, housing policy, public health, and community engagement. Summer 2026: June 22–July 30.",
+    "The HPRI Summer Fellowship Program is a six-week hybrid learning experience in homelessness research, housing policy, public health, and community engagement. Summer 2026: June 22–July 30.",
   keywords: [
     "HPRI",
     "Summer Fellows",
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     "social work",
   ],
   openGraph: {
-    title: "HPRI Summer Fellows Program | Summer 2026",
+    title: "HPRI Summer Fellowship Program | Summer 2026",
     description:
       "A central hub for fellows, families, mentors, and staff. June 22–July 30, 2026.",
     type: "website",

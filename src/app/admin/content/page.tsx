@@ -31,7 +31,7 @@ export default async function AdminContentPage() {
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest text-gold">
-              HPRI Summer Fellows
+              HPRI Summer Fellowship
             </p>
             <h1 className="font-serif text-2xl font-bold text-white">
               Edit site content

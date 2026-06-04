@@ -36,7 +36,7 @@ export default function AdminLoginPage() {
     <main className="flex min-h-screen items-center justify-center bg-neutral-100 px-4">
       <div className="w-full max-w-sm rounded-lg border border-neutral-200 bg-white p-6 shadow-sm">
         <p className="text-sm font-semibold uppercase tracking-widest text-cardinal">
-          HPRI Summer Fellows
+          HPRI Summer Fellowship
         </p>
         <h1 className="mt-1 font-serif text-2xl font-bold text-neutral-900">
           Admin sign in

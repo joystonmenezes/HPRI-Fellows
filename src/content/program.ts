@@ -60,12 +60,12 @@ const SOCIAL_WORK_CENTER =
   "USC Social Work Center, 665 W. 34th Street, Room 106, Los Angeles, CA 90089 and Zoom";
 
 export const program = {
-  name: "HPRI Summer Fellows Program",
+  name: "HPRI Summer Fellowship Program",
   term: "Summer 2026",
   dateRange: "June 22–July 30, 2026",
   tagline: "A central hub for fellows, families, mentors, and staff.",
   intro:
-    "The HPRI Summer Fellows Program is a six-week hybrid learning experience for students and early-career fellows interested in homelessness research, housing policy, public health, social work, data, field learning, and community engagement. Fellows participate approximately 10 hours per week through seminars, mentor meetings, self-directed or project-based work, assignments, and a final capstone presentation.",
+    "The HPRI Summer Fellowship Program is a six-week hybrid learning experience for students and early-career fellows interested in homelessness research, housing policy, public health, social work, data, field learning, and community engagement. Fellows participate approximately 10 hours per week through seminars, mentor meetings, self-directed or project-based work, assignments, and a final capstone presentation.",
 
   quickLinks: [
     { label: "Fellowship Overview" },
