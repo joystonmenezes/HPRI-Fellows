@@ -1,0 +1,31 @@
+# Firebase App Hosting configuration.
+# https://firebase.google.com/docs/app-hosting/configure
+#
+# Runs the Next.js server on Cloud Run. Scales to zero when idle (so it costs
+# ~nothing on the Blaze free tier) and is capped at one instance to keep spend
+# bounded. Secrets live in Cloud Secret Manager and are referenced by name.
+
+runConfig:
+  minInstances: 0
+  maxInstances: 1
+  concurrency: 80
+  cpu: 1
+  memoryMiB: 1024
+
+env:
+  # Not sensitive — the bucket is protected by IAM, not by hiding its name.
+  - variable: FIREBASE_STORAGE_BUCKET
+    value: hpri-fellows.firebasestorage.app
+    availability:
+      - BUILD
+      - RUNTIME
+
+  # Sensitive values — stored in Secret Manager, never committed to the repo.
+  - variable: FIREBASE_SERVICE_ACCOUNT_B64
+    secret: firebase-sa-b64
+  - variable: ADMIN_USERNAME
+    secret: admin-username
+  - variable: ADMIN_PASSWORD
+    secret: admin-password
+  - variable: SESSION_SECRET
+    secret: session-secret
