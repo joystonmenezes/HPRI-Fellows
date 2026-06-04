@@ -1,6 +1,7 @@
-import { program, nav } from "@/content/program";
+import { program } from "@/content/program";
 import { getContent, submissionState } from "@/lib/content";
 import { SiteHeader } from "@/components/SiteHeader";
+import { SectionNav } from "@/components/SectionNav";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { SiteFooter } from "@/components/SiteFooter";
 import {
@@ -127,28 +128,11 @@ export default async function Home() {
             >
               {content.intro}
             </p>
-            {/* Actions + section jumps, combined into a single uniform row. */}
-            <nav
-              aria-label="Page sections"
-              className="animate-fade-up mt-8"
-              style={{ animationDelay: "0.6s" }}
-            >
-              <ul className="flex flex-wrap gap-2.5">
-                {nav.map((n) => (
-                  <li key={n.href}>
-                    <a
-                      href={n.href}
-                      className="inline-flex items-center rounded-full border border-white/50 px-4 py-2 text-sm font-semibold text-white backdrop-blur-sm transition hover:border-gold hover:bg-white/10"
-                    >
-                      {n.label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </nav>
           </div>
         </div>
       </section>
+
+      <SectionNav />
 
       {/* News & Announcements */}
       {announcements.length > 0 ? (

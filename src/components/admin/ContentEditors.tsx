@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Children, type ReactNode, type FormEvent } from "react";
 
 const labelClass = "block text-sm font-semibold text-neutral-800";
 const inputClass =
   "mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm shadow-sm focus:border-cardinal focus:outline-none";
-const cardClass = "rounded-lg border border-neutral-200 bg-white p-5 shadow-sm";
 const btnPrimary =
   "inline-flex items-center rounded-md bg-cardinal px-4 py-2 text-sm font-semibold text-white transition hover:bg-cardinal-dark disabled:opacity-60";
 const btnGhost =
@@ -58,6 +57,41 @@ function useSaver() {
   return { status, error, setStatus, save };
 }
 
+// A section card that collapses. The first child (the section heading) stays
+// visible as the clickable summary; the rest is shown only when expanded. Inputs
+// stay mounted while collapsed, so unsaved edits are preserved.
+function CollapsibleForm({
+  onSubmit,
+  children,
+}: {
+  onSubmit: (e: FormEvent<HTMLFormElement>) => void;
+  children: ReactNode;
+}) {
+  const items = Children.toArray(children);
+  const heading = items[0];
+  const body = items.slice(1);
+  return (
+    <details className="rounded-lg border border-neutral-200 bg-white shadow-sm [&[open]_svg]:rotate-180">
+      <summary className="flex cursor-pointer list-none items-center gap-3 rounded-lg px-5 py-4 transition hover:bg-neutral-50/60 [&::-webkit-details-marker]:hidden">
+        <span className="min-w-0 grow">{heading}</span>
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 20 20"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          className="h-5 w-5 shrink-0 text-cardinal transition-transform duration-200"
+        >
+          <path d="M5 7.5l5 5 5-5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </summary>
+      <form className="border-t border-neutral-200 px-5 pb-5 pt-4" onSubmit={onSubmit}>
+        {body}
+      </form>
+    </details>
+  );
+}
+
 export function BasicsEditor({
   initial,
 }: {
@@ -71,8 +105,7 @@ export function BasicsEditor({
   const touch = () => setStatus("idle");
 
   return (
-    <form
-      className={cardClass}
+    <CollapsibleForm
       onSubmit={(e) => {
         e.preventDefault();
         save({ term, dateRange, tagline, intro });
@@ -144,7 +177,7 @@ export function BasicsEditor({
         />
       </div>
       <SaveBar status={status} error={error} />
-    </form>
+    </CollapsibleForm>
   );
 }
 
@@ -171,8 +204,7 @@ export function QuickLinksEditor({
   }
 
   return (
-    <form
-      className={cardClass}
+    <CollapsibleForm
       onSubmit={(e) => {
         e.preventDefault();
         const quickLinks = rows
@@ -248,7 +280,7 @@ export function QuickLinksEditor({
         + Add link
       </button>
       <SaveBar status={status} error={error} />
-    </form>
+    </CollapsibleForm>
   );
 }
 
@@ -275,8 +307,7 @@ export function AnnouncementsEditor({
   }
 
   return (
-    <form
-      className={cardClass}
+    <CollapsibleForm
       onSubmit={(e) => {
         e.preventDefault();
         save({ announcements: items });
@@ -368,7 +399,7 @@ export function AnnouncementsEditor({
         + Add announcement
       </button>
       <SaveBar status={status} error={error} />
-    </form>
+    </CollapsibleForm>
   );
 }
 
@@ -599,8 +630,7 @@ export function GlanceEditor({
   const touch = () => setStatus("idle");
 
   return (
-    <form
-      className={cardClass}
+    <CollapsibleForm
       onSubmit={(e) => {
         e.preventDefault();
         const clean = rows
@@ -683,7 +713,7 @@ export function GlanceEditor({
         />
       </div>
       <SaveBar status={status} error={error} />
-    </form>
+    </CollapsibleForm>
   );
 }
 
@@ -737,8 +767,7 @@ export function PresentationsEditor({
   };
 
   return (
-    <form
-      className={cardClass}
+    <CollapsibleForm
       onSubmit={(e) => {
         e.preventDefault();
         const schedule = rows
@@ -888,7 +917,7 @@ export function PresentationsEditor({
         />
       </div>
       <SaveBar status={status} error={error} />
-    </form>
+    </CollapsibleForm>
   );
 }
 
@@ -912,8 +941,7 @@ export function RulesEditor({
   const touch = () => setStatus("idle");
 
   return (
-    <form
-      className={cardClass}
+    <CollapsibleForm
       onSubmit={(e) => {
         e.preventDefault();
         save({
@@ -967,7 +995,7 @@ export function RulesEditor({
         />
       </div>
       <SaveBar status={status} error={error} />
-    </form>
+    </CollapsibleForm>
   );
 }
 
@@ -1015,8 +1043,7 @@ export function MentorsEditor({
   };
 
   return (
-    <form
-      className={cardClass}
+    <CollapsibleForm
       onSubmit={(e) => {
         e.preventDefault();
         const clean = rows
@@ -1128,7 +1155,7 @@ export function MentorsEditor({
         />
       </div>
       <SaveBar status={status} error={error} />
-    </form>
+    </CollapsibleForm>
   );
 }
 
@@ -1164,8 +1191,7 @@ export function ActivitiesEditor({
   };
 
   return (
-    <form
-      className={cardClass}
+    <CollapsibleForm
       onSubmit={(e) => {
         e.preventDefault();
         const clean = rows
@@ -1270,7 +1296,7 @@ export function ActivitiesEditor({
         />
       </div>
       <SaveBar status={status} error={error} />
-    </form>
+    </CollapsibleForm>
   );
 }
 
@@ -1321,8 +1347,7 @@ export function AssignmentsEditor({
   };
 
   return (
-    <form
-      className={cardClass}
+    <CollapsibleForm
       onSubmit={(e) => {
         e.preventDefault();
         const clean = rows
@@ -1462,7 +1487,7 @@ export function AssignmentsEditor({
         />
       </div>
       <SaveBar status={status} error={error} />
-    </form>
+    </CollapsibleForm>
   );
 }
 
@@ -1486,8 +1511,7 @@ export function CapstoneEditor({
   const touch = () => setStatus("idle");
 
   return (
-    <form
-      className={cardClass}
+    <CollapsibleForm
       onSubmit={(e) => {
         e.preventDefault();
         save({
@@ -1554,7 +1578,7 @@ export function CapstoneEditor({
         />
       </div>
       <SaveBar status={status} error={error} />
-    </form>
+    </CollapsibleForm>
   );
 }
 
@@ -1610,8 +1634,7 @@ export function ContactsEditor({
   };
 
   return (
-    <form
-      className={cardClass}
+    <CollapsibleForm
       onSubmit={(e) => {
         e.preventDefault();
         const cleanRows = rows
@@ -1786,6 +1809,6 @@ export function ContactsEditor({
         </button>
       </div>
       <SaveBar status={status} error={error} />
-    </form>
+    </CollapsibleForm>
   );
 }
