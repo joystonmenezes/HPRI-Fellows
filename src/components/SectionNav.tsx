@@ -19,11 +19,11 @@ export function SectionNav({
       {/* Abstract gold backdrop (opaque base + soft blurred highlights). */}
       <div
         aria-hidden="true"
-        className="absolute inset-0 -z-10 bg-gradient-to-r from-gold-dark via-gold to-gold-light"
+        className="absolute inset-0 -z-10 bg-gradient-to-r from-[#c8960c] via-[#e3ad12] to-[#c8960c]"
       >
-        <div className="absolute -left-16 -top-20 h-44 w-44 rounded-full bg-white/40 blur-2xl" />
-        <div className="absolute left-1/2 -top-24 h-44 w-80 -translate-x-1/2 rounded-full bg-gold-light/70 blur-3xl" />
-        <div className="absolute -bottom-24 right-0 h-44 w-72 rounded-full bg-cardinal/10 blur-3xl" />
+        <div className="absolute -left-16 -top-20 h-44 w-44 rounded-full bg-gold-light/40 blur-2xl" />
+        <div className="absolute left-1/2 -top-24 h-44 w-80 -translate-x-1/2 rounded-full bg-gold/50 blur-3xl" />
+        <div className="absolute -bottom-24 right-0 h-44 w-72 rounded-full bg-cardinal/20 blur-3xl" />
       </div>
 
       <div className="mx-auto max-w-content px-4">

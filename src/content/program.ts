@@ -123,7 +123,7 @@ export const program = {
           "Sara Ozuna / Gisele Corletto: Research Ethics & CITI Training Workshop",
         location: CITY_CENTER,
         materials: [
-          { label: "Slides" },
+          { label: "Presentation" },
           { label: "Recording" },
           { label: "Reflection" },
         ],
@@ -136,7 +136,7 @@ export const program = {
           "Nelly Stastny: Miracle Friends, Phone Buddies, and Universal Basic Income",
         location: "Zoom",
         materials: [
-          { label: "Slides" },
+          { label: "Presentation" },
           { label: "Recording" },
           { label: "Reflection" },
         ],
@@ -149,7 +149,7 @@ export const program = {
           "Drs. Ben Henwood & Sam Tsemberis: Housing First, Permanent Supportive Housing, and Program Models",
         location: CITY_CENTER,
         materials: [
-          { label: "Slides" },
+          { label: "Presentation" },
           { label: "Recording" },
           { label: "Reflection" },
         ],
@@ -161,7 +161,7 @@ export const program = {
         topic: "Sean Pleasants: Lived Experience of Homelessness",
         location: "Zoom",
         materials: [
-          { label: "Slides" },
+          { label: "Presentation" },
           { label: "Recording" },
           { label: "Reflection" },
         ],
@@ -174,7 +174,7 @@ export const program = {
           "Nick Weinmeister: Policy Research, Stakeholders, and Civic Action",
         location: CITY_CENTER,
         materials: [
-          { label: "Slides" },
+          { label: "Presentation" },
           { label: "Recording" },
           { label: "Reflection" },
         ],
@@ -186,7 +186,7 @@ export const program = {
         topic: "Greg Derelian: Get Comfortable with Public Speaking",
         location: SOCIAL_WORK_CENTER,
         materials: [
-          { label: "Slides" },
+          { label: "Presentation" },
           { label: "Recording" },
           { label: "Reflection" },
         ],
@@ -199,7 +199,7 @@ export const program = {
           "Dr. Amanda Landrian Gonzales and Data Team: Data, Homeless Count, and Demographic Survey Methods",
         location: SOCIAL_WORK_CENTER,
         materials: [
-          { label: "Slides" },
+          { label: "Presentation" },
           { label: "Recording" },
           { label: "Reflection" },
         ],
@@ -211,7 +211,7 @@ export const program = {
         topic: "Dr. Rev. Seth Pickens: Faith and Homelessness",
         location: "Zoom",
         materials: [
-          { label: "Slides" },
+          { label: "Presentation" },
           { label: "Recording" },
           { label: "Reflection" },
         ],
@@ -224,7 +224,7 @@ export const program = {
           "Amy Stein & Shantel Cordon: Meet the USC Student Demographic Survey Team — Panel on Campus with Tour",
         location: SOCIAL_WORK_CENTER,
         materials: [
-          { label: "Slides" },
+          { label: "Presentation" },
           { label: "Recording" },
           { label: "Reflection" },
         ],

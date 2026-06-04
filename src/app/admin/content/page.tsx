@@ -4,6 +4,7 @@ import { getContent } from "@/lib/content";
 import {
   AccordionProvider,
   SectionsEditor,
+  BannerEditor,
   BasicsEditor,
   QuickLinksEditor,
   AnnouncementsEditor,
@@ -67,10 +68,11 @@ export default async function AdminContentPage() {
           <span className="font-semibold text-neutral-700">Jump to: </span>
           <span className="text-cardinal">
             {[
-              ["news", "News"],
               ["sections", "Page layout"],
+              ["news", "News"],
+              ["banner", "Banner"],
               ["basics", "Header & intro"],
-              ["links", "Quick links"],
+              ["links", "External References"],
               ["glance", "At a glance"],
               ["presentations", "Presentations"],
               ["rules", "Rules"],
@@ -90,12 +92,15 @@ export default async function AdminContentPage() {
           </span>
         </nav>
 
-        <AccordionProvider defaultOpenIds={["news"]}>
+        <AccordionProvider defaultOpenIds={[]}>
+        <section id="edit-sections" className="scroll-mt-4">
+          <SectionsEditor initial={c.sections} />
+        </section>
         <section id="edit-news" className="scroll-mt-4">
           <AnnouncementsEditor initial={c.announcements} />
         </section>
-        <section id="edit-sections" className="scroll-mt-4">
-          <SectionsEditor initial={c.sections} />
+        <section id="edit-banner" className="scroll-mt-4">
+          <BannerEditor initial={c.bannerImages} />
         </section>
         <section id="edit-basics" className="scroll-mt-4">
           <BasicsEditor

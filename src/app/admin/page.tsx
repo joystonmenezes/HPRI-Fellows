@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { listSubmissions, type Submission } from "@/lib/store";
 import { LogoutButton } from "@/components/admin/LogoutButton";
+import { DeleteSubmissionButton } from "@/components/admin/DeleteSubmissionButton";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -85,6 +86,9 @@ export default async function AdminDashboard() {
                     <th className={th}>Assignment</th>
                     <th className={th}>File</th>
                     <th className={th}>Note</th>
+                    <th className={th}>
+                      <span className="sr-only">Actions</span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -110,6 +114,9 @@ export default async function AdminDashboard() {
                         {s.message || (
                           <span className="text-neutral-400">—</span>
                         )}
+                      </td>
+                      <td className={`${td} whitespace-nowrap`}>
+                        <DeleteSubmissionButton id={s.id} what="submission" />
                       </td>
                     </tr>
                   ))}
@@ -140,6 +147,9 @@ export default async function AdminDashboard() {
                     <th className={th}>Email</th>
                     <th className={th}>Subject</th>
                     <th className={th}>Message</th>
+                    <th className={th}>
+                      <span className="sr-only">Actions</span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -164,6 +174,9 @@ export default async function AdminDashboard() {
                       </td>
                       <td className={`${td} max-w-md whitespace-pre-wrap text-neutral-700`}>
                         {s.message}
+                      </td>
+                      <td className={`${td} whitespace-nowrap`}>
+                        <DeleteSubmissionButton id={s.id} what="message" />
                       </td>
                     </tr>
                   ))}

@@ -44,6 +44,9 @@ export type SiteContent = {
   dateRange: string;
   tagline: string;
   intro: string;
+  // Hero banner photos. Empty → the bundled /banner.jpg is shown. One → a single
+  // photo; several → a slideshow that fades between them every couple of seconds.
+  bannerImages: string[];
   quickLinks: Link[];
   announcements: Announcement[];
   // Program at a glance
@@ -92,6 +95,7 @@ export function defaultContent(): SiteContent {
     dateRange: program.dateRange,
     tagline: program.tagline,
     intro: program.intro,
+    bannerImages: [],
     quickLinks: program.quickLinks.map((l) => ({ ...link(l), published: true })),
     announcements: [],
     glance: {
@@ -193,6 +197,24 @@ function cleanLinks(v: unknown): Link[] {
     })
     .filter((l) => l.label.length > 0)
     .slice(0, 50);
+}
+
+// Banner photos: a list of safe image URLs — either an uploaded
+// "/api/banner/…" path served by our own route, or an external http(s) link.
+// Anything else (e.g. a javascript: URL) is dropped so the hero can't be
+// pointed at an unsafe source.
+function safeImageUrl(v: unknown): string | undefined {
+  const url = clampStr(v, 1000).trim();
+  if (!url) return undefined;
+  return /^(https?:\/\/|\/)/i.test(url) ? url : undefined;
+}
+
+function cleanBannerImages(v: unknown): string[] {
+  if (!Array.isArray(v)) return [];
+  return v
+    .map(safeImageUrl)
+    .filter((s): s is string => Boolean(s))
+    .slice(0, 12);
 }
 
 // Quick links carry a publish flag (unlike the "materials" links, which use
@@ -369,6 +391,9 @@ function mergeContent(d: SiteContent, s: Partial<SiteContent>): SiteContent {
     dateRange: has(s.dateRange) ? clampStr(s.dateRange, 120).trim() : d.dateRange,
     tagline: has(s.tagline) ? clampStr(s.tagline, 200).trim() : d.tagline,
     intro: has(s.intro) ? clampStr(s.intro, 4000).trim() : d.intro,
+    bannerImages: Array.isArray(s.bannerImages)
+      ? cleanBannerImages(s.bannerImages)
+      : d.bannerImages,
     quickLinks: Array.isArray(s.quickLinks) ? cleanQuickLinks(s.quickLinks) : d.quickLinks,
     announcements: Array.isArray(s.announcements)
       ? cleanAnnouncements(s.announcements)
@@ -466,6 +491,31 @@ function mergeContent(d: SiteContent, s: Partial<SiteContent>): SiteContent {
   };
 }
 
+// One-time display rename: the seminar materials were originally seeded with a
+// link labelled "Slides". The program now calls these "Presentation", so we
+// rename that exact label whenever content is read. This keeps the live site
+// correct even though the stored document still holds the old label; the next
+// time an admin saves the Presentations section the new label is persisted.
+// Only the exact "Slides" label is touched, so any custom labels are untouched.
+function renamePresentationLabels(c: SiteContent): SiteContent {
+  let changed = false;
+  const schedule = c.presentations.schedule.map((row) => {
+    let rowChanged = false;
+    const materials = row.materials.map((m) => {
+      if (m.label === "Slides") {
+        rowChanged = true;
+        return { ...m, label: "Presentation" };
+      }
+      return m;
+    });
+    if (!rowChanged) return row;
+    changed = true;
+    return { ...row, materials };
+  });
+  if (!changed) return c;
+  return { ...c, presentations: { ...c.presentations, schedule } };
+}
+
 // ── Storage: Firestore (preferred) with local-file fallback ─────────────────
 
 function readFile(): Partial<SiteContent> {
@@ -509,7 +559,7 @@ export async function getContent(): Promise<SiteContent> {
   } else {
     stored = readFile();
   }
-  return mergeContent(d, stored);
+  return renamePresentationLabels(mergeContent(d, stored));
 }
 
 export async function saveContent(patch: Partial<SiteContent>): Promise<SiteContent> {
@@ -521,6 +571,7 @@ export async function saveContent(patch: Partial<SiteContent>): Promise<SiteCont
   if ("dateRange" in patch) clean.dateRange = clampStr(patch.dateRange, 120).trim();
   if ("tagline" in patch) clean.tagline = clampStr(patch.tagline, 200).trim();
   if ("intro" in patch) clean.intro = clampStr(patch.intro, 4000).trim();
+  if ("bannerImages" in patch) clean.bannerImages = cleanBannerImages(patch.bannerImages);
   if ("quickLinks" in patch) clean.quickLinks = cleanQuickLinks(patch.quickLinks);
   if ("announcements" in patch) clean.announcements = cleanAnnouncements(patch.announcements);
   if ("glance" in patch)

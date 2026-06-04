@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { getDb } from "@/lib/firebase";
+import { getDb, getBucket } from "@/lib/firebase";
 
 // Store for form submissions. When Firebase is configured, submissions live in
 // the Firestore collection "submissions" (so they persist on serverless hosts
@@ -88,4 +88,42 @@ export async function addSubmission(
   all.push(item);
   writeFile(all);
   return item;
+}
+
+// Permanently remove a submission (assignment or contact message) by its id.
+// Any uploaded file is deleted too, best-effort, so nothing is left orphaned in
+// Storage / on disk. Returns false if no matching submission was found.
+export async function deleteSubmission(id: number): Promise<boolean> {
+  const db = getDb();
+  if (db) {
+    const snap = await db.collection(COLLECTION).where("id", "==", id).get();
+    if (snap.empty) return false;
+    const bucket = getBucket();
+    for (const doc of snap.docs) {
+      const data = doc.data() as Submission;
+      if (bucket && data.filePath) {
+        await bucket
+          .file(data.filePath)
+          .delete()
+          .catch((e) => console.error("[store] upload delete failed", e));
+      }
+      await doc.ref.delete();
+    }
+    return true;
+  }
+
+  const all = readFile();
+  const item = all.find((s) => s.id === id);
+  if (!item) return false;
+  if (item.filePath) {
+    // filePath is stored as "uploads/<name>"; local copies live under data/.
+    try {
+      const local = path.join(dataDir, item.filePath);
+      if (fs.existsSync(local)) fs.unlinkSync(local);
+    } catch (e) {
+      console.error("[store] local upload delete failed", e);
+    }
+  }
+  writeFile(all.filter((s) => s.id !== id));
+  return true;
 }

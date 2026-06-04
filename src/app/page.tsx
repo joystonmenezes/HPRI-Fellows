@@ -3,6 +3,7 @@ import { program } from "@/content/program";
 import { getContent, submissionState } from "@/lib/content";
 import { type SectionKey, SECTION_NAV_LABELS } from "@/content/sections";
 import { SiteHeader } from "@/components/SiteHeader";
+import { HeroBanner } from "@/components/HeroBanner";
 import { SectionNav } from "@/components/SectionNav";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -79,8 +80,8 @@ export default async function Home() {
     materials: (
       <Section
         id="materials"
-        title="Quick Links"
-        intro="Program materials and key links. Items marked “soon” are activated as documents and links are uploaded."
+        title="External References"
+        intro="External references and key program links. Items marked “soon” are activated as documents and links are uploaded."
       >
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {quickLinks.map((l) => (
@@ -393,20 +394,10 @@ export default async function Home() {
 
       {/* Hero banner */}
       <section id="top" className="relative isolate overflow-hidden">
-        {/* Background: cardinal gradient (shows even if the photo is missing),
-            the banner photo on top with a slow ken-burns drift, then a cardinal
-            overlay so the white title stays readable. */}
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 -z-10 bg-gradient-to-br from-cardinal-dark via-cardinal to-cardinal-dark"
-        >
-          <div
-            className="animate-slow-zoom absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: "url('/banner.jpg')" }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-cardinal-dark/95 via-cardinal-dark/75 to-cardinal/25" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
-        </div>
+        {/* Background: cardinal gradient base (shows even if a photo is missing),
+            then the admin-chosen banner photo(s) — a slideshow when there are
+            several — with a cardinal overlay so the white title stays readable. */}
+        <HeroBanner images={content.bannerImages} />
 
         <div className="mx-auto max-w-content px-4 py-20 sm:py-28">
           <div className="max-w-3xl">

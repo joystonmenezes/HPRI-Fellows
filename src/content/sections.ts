@@ -23,7 +23,7 @@ export type SectionKey = (typeof SECTION_KEYS)[number];
 
 // Friendly names shown in the admin "Page layout" manager.
 export const SECTION_LABELS: Record<SectionKey, string> = {
-  materials: "Quick Links",
+  materials: "External References",
   glance: "Program at a Glance",
   presentations: "Presentations",
   rules: "Rules & Expectations",

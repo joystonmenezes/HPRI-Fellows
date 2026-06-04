@@ -7,6 +7,8 @@ import {
   useContext,
   type ReactNode,
   type FormEvent,
+  type ChangeEvent,
+  type DragEvent,
 } from "react";
 import { type SectionConfig, SECTION_LABELS } from "@/content/sections";
 
@@ -63,6 +65,76 @@ function useSaver() {
     }
   }
   return { status, error, setStatus, save };
+}
+
+// Move an item from one index to another, returning a new array (used by the
+// drag-to-reorder lists below).
+function reorder<T>(list: T[], from: number, to: number): T[] {
+  const next = list.slice();
+  const [moved] = next.splice(from, 1);
+  next.splice(to, 0, moved);
+  return next;
+}
+
+// Drag-and-drop reordering for a vertical list. Spread rowProps(i) onto each
+// row to make the whole row a drag source and drop target; dragIndex/overIndex
+// drive the visual feedback. Dropping calls onReorder(from, to), so dragging the
+// last row onto the first moves it all the way up in a single gesture.
+function useDragReorder(onReorder: (from: number, to: number) => void) {
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [overIndex, setOverIndex] = useState<number | null>(null);
+
+  function rowProps(i: number) {
+    return {
+      draggable: true,
+      onDragStart: (e: DragEvent) => {
+        setDragIndex(i);
+        e.dataTransfer.effectAllowed = "move";
+        // Firefox needs some data set for a drag to begin.
+        try {
+          e.dataTransfer.setData("text/plain", String(i));
+        } catch {
+          /* ignore */
+        }
+      },
+      onDragOver: (e: DragEvent) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        if (overIndex !== i) setOverIndex(i);
+      },
+      onDrop: (e: DragEvent) => {
+        e.preventDefault();
+        if (dragIndex !== null && dragIndex !== i) onReorder(dragIndex, i);
+        setDragIndex(null);
+        setOverIndex(null);
+      },
+      onDragEnd: () => {
+        setDragIndex(null);
+        setOverIndex(null);
+      },
+    };
+  }
+
+  return { dragIndex, overIndex, rowProps };
+}
+
+// A six-dot drag affordance shown at the left of reorderable rows.
+function GripIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 20 20"
+      fill="currentColor"
+      className="h-5 w-5"
+    >
+      <circle cx="7" cy="4" r="1.3" />
+      <circle cx="7" cy="10" r="1.3" />
+      <circle cx="7" cy="16" r="1.3" />
+      <circle cx="13" cy="4" r="1.3" />
+      <circle cx="13" cy="10" r="1.3" />
+      <circle cx="13" cy="16" r="1.3" />
+    </svg>
+  );
 }
 
 // Accordion coordination: a provider tracks which section cards are open so the
@@ -172,6 +244,11 @@ export function SectionsEditor({ initial }: { initial: SectionConfig[] }) {
     touch();
   }
 
+  const drag = useDragReorder((from, to) => {
+    setRows((prev) => reorder(prev, from, to));
+    touch();
+  });
+
   return (
     <CollapsibleForm
       id="sections"
@@ -182,16 +259,31 @@ export function SectionsEditor({ initial }: { initial: SectionConfig[] }) {
     >
       <h2 className="font-serif text-xl font-bold text-cardinal">Page layout</h2>
       <p className="mt-1 text-sm text-neutral-600">
-        Reorder the main sections with the arrows, and untick “Show on site” to
-        hide a whole section (it stays here so you can bring it back any time).
-        The hero banner, news band, and footer always stay in place.
+        Drag a section by its handle to drop it exactly where you want (or nudge
+        it with the arrows), and untick “Show on site” to hide a whole section
+        (it stays here so you can bring it back any time). The hero banner, news
+        band, and footer always stay in place.
       </p>
       <ul className="mt-4 space-y-2">
         {rows.map((r, i) => (
           <li
             key={r.key}
-            className="flex items-center gap-3 rounded-md border border-neutral-200 bg-white px-3 py-2 shadow-sm"
+            {...drag.rowProps(i)}
+            className={`flex items-center gap-2 rounded-md border bg-white px-3 py-2 shadow-sm transition ${
+              drag.dragIndex === i
+                ? "border-cardinal opacity-50"
+                : drag.overIndex === i
+                  ? "border-cardinal ring-2 ring-cardinal/30"
+                  : "border-neutral-200"
+            } cursor-grab active:cursor-grabbing`}
           >
+            <span
+              aria-hidden="true"
+              title="Drag to reorder"
+              className="shrink-0 text-neutral-300"
+            >
+              <GripIcon />
+            </span>
             <div className="flex flex-col gap-0.5">
               <button
                 type="button"
@@ -260,6 +352,175 @@ export function SectionsEditor({ initial }: { initial: SectionConfig[] }) {
           </li>
         ))}
       </ul>
+      <SaveBar status={status} error={error} />
+    </CollapsibleForm>
+  );
+}
+
+// Banner photos: upload images or paste links for the hero. Several photos play
+// as a slideshow on the public site; drag to reorder; with none the bundled
+// banner photo is used.
+export function BannerEditor({ initial }: { initial: string[] }) {
+  const [rows, setRows] = useState<string[]>(initial.slice());
+  const [urlInput, setUrlInput] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const { status, error, setStatus, save } = useSaver();
+  const touch = () => setStatus("idle");
+
+  const drag = useDragReorder((from, to) => {
+    setRows((prev) => reorder(prev, from, to));
+    touch();
+  });
+
+  function removeAt(i: number) {
+    setRows((prev) => prev.filter((_, idx) => idx !== i));
+    touch();
+  }
+
+  function addUrl() {
+    const u = urlInput.trim();
+    if (!u) return;
+    setRows((prev) => [...prev, u]);
+    setUrlInput("");
+    touch();
+  }
+
+  async function onFile(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // let the same file be re-picked later
+    if (!file) return;
+    setUploading(true);
+    setUploadError("");
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/admin/banner", { method: "POST", body: fd });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || !json.ok || !json.url) {
+        throw new Error(json.error || "Upload failed.");
+      }
+      setRows((prev) => [...prev, json.url as string]);
+      touch();
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Upload failed.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <CollapsibleForm
+      id="banner"
+      onSubmit={(e) => {
+        e.preventDefault();
+        save({ bannerImages: rows });
+      }}
+    >
+      <h2 className="font-serif text-xl font-bold text-cardinal">
+        Banner photos
+      </h2>
+      <p className="mt-1 text-sm text-neutral-600">
+        Photos for the big banner at the top of the page. Add several and they
+        play as a slideshow — fading from one to the next every couple of
+        seconds, like a photo story. With none, the built-in banner photo is
+        used. Drag to set the order, then press “Save changes”.
+      </p>
+
+      {rows.length === 0 ? (
+        <p className="mt-4 rounded-md border border-dashed border-neutral-300 bg-neutral-50 p-4 text-sm text-neutral-500">
+          No banner photos yet — the default banner is showing. Add one below.
+        </p>
+      ) : (
+        <ul className="mt-4 space-y-2">
+          {rows.map((src, i) => (
+            <li
+              key={`${i}-${src}`}
+              {...drag.rowProps(i)}
+              className={`flex items-center gap-3 rounded-md border bg-white px-3 py-2 shadow-sm transition ${
+                drag.dragIndex === i
+                  ? "border-cardinal opacity-50"
+                  : drag.overIndex === i
+                    ? "border-cardinal ring-2 ring-cardinal/30"
+                    : "border-neutral-200"
+              } cursor-grab active:cursor-grabbing`}
+            >
+              <span
+                aria-hidden="true"
+                title="Drag to reorder"
+                className="shrink-0 text-neutral-300"
+              >
+                <GripIcon />
+              </span>
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-xs font-semibold text-neutral-500">
+                {i + 1}
+              </span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={src}
+                alt=""
+                className="h-12 w-20 shrink-0 rounded object-cover ring-1 ring-neutral-200"
+              />
+              <span className="grow truncate text-xs text-neutral-500">
+                {src}
+              </span>
+              <button
+                type="button"
+                onClick={() => removeAt(i)}
+                className="shrink-0 rounded-md border border-red-200 px-2.5 py-1 text-xs font-semibold text-red-700 transition hover:bg-red-50"
+              >
+                Remove
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <div>
+          <label htmlFor="banner-file" className={labelClass}>
+            Upload a photo
+          </label>
+          <input
+            id="banner-file"
+            type="file"
+            accept="image/*"
+            onChange={onFile}
+            disabled={uploading}
+            className="mt-1 block w-full text-sm text-neutral-600 file:mr-3 file:rounded-md file:border-0 file:bg-cardinal file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-cardinal-dark"
+          />
+          {uploading ? (
+            <p className="mt-1 text-xs text-neutral-500">Uploading…</p>
+          ) : null}
+          {uploadError ? (
+            <p className="mt-1 text-xs text-red-600">{uploadError}</p>
+          ) : null}
+        </div>
+        <div>
+          <label htmlFor="banner-url" className={labelClass}>
+            …or paste an image link
+          </label>
+          <div className="mt-1 flex gap-2">
+            <input
+              id="banner-url"
+              value={urlInput}
+              onChange={(e) => setUrlInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  addUrl();
+                }
+              }}
+              placeholder="https://…"
+              className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm shadow-sm focus:border-cardinal focus:outline-none"
+            />
+            <button type="button" onClick={addUrl} className={btnGhost}>
+              Add
+            </button>
+          </div>
+        </div>
+      </div>
+
       <SaveBar status={status} error={error} />
     </CollapsibleForm>
   );
@@ -392,9 +653,9 @@ export function QuickLinksEditor({
       }}
       id="links"
     >
-      <h2 className="font-serif text-xl font-bold text-cardinal">Quick links</h2>
+      <h2 className="font-serif text-xl font-bold text-cardinal">External References</h2>
       <p className="mt-1 text-sm text-neutral-600">
-        The buttons in the “Quick Links” grid. Leave the web address blank to
+        The buttons in the “External References” grid. Leave the web address blank to
         show a grey “soon” placeholder until the document is ready. Uncheck
         “Published” to hide a link without deleting it.
       </p>
@@ -749,7 +1010,7 @@ function LinksList({
           <input
             className={inputClass}
             value={l.label}
-            placeholder="Label (e.g. Slides)"
+            placeholder="Label (e.g. Presentation)"
             onChange={(e) =>
               onChange(
                 links.map((x, idx) =>
@@ -966,7 +1227,7 @@ export function PresentationsEditor({
     >
       <SectionHeading title="Presentations & schedule" count={rows.length} />
       <p className={sectionLead}>
-        Seminars and Tuesday Talks. Add the Slides / Recording / Reflection links
+        Seminars and Tuesday Talks. Add the Presentation / Recording / Reflection links
         as they become available — leave a link’s address blank to show a grey
         “soon” chip.
       </p>
