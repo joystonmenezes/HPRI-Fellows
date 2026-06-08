@@ -130,7 +130,7 @@ export const program = {
       },
       {
         week: "Week 2",
-        when: "Tues June 30, 12–1:30pm",
+        when: "Tues June 30, 12–2pm",
         type: "Tuesday Talk",
         topic:
           "Nelly Stastny: Miracle Friends, Phone Buddies, and Universal Basic Income",
@@ -143,10 +143,9 @@ export const program = {
       },
       {
         week: "Week 2",
-        when: "Wed July 1, 12–1:30pm",
+        when: "Wed July 1, 12–2pm",
         type: "Fellows Seminar 2",
-        topic:
-          "Drs. Ben Henwood & Sam Tsemberis: Housing First, Permanent Supportive Housing, and Program Models",
+        topic: "Sean Pleasants: Lived Experience of Homelessness",
         location: CITY_CENTER,
         materials: [
           { label: "Presentation" },
@@ -156,9 +155,9 @@ export const program = {
       },
       {
         week: "Week 3",
-        when: "Tues July 7, 12–1:30pm",
+        when: "Tues July 7, 12–2pm",
         type: "Tuesday Talk",
-        topic: "Sean Pleasants: Lived Experience of Homelessness",
+        topic: "To be announced",
         location: "Zoom",
         materials: [
           { label: "Presentation" },
@@ -168,10 +167,23 @@ export const program = {
       },
       {
         week: "Week 3",
-        when: "Wed July 8, 12–1:30pm",
+        when: "Wed July 8, 12–2pm",
         type: "Fellows Seminar 3",
         topic:
           "Nick Weinmeister: Policy Research, Stakeholders, and Civic Action",
+        location: CITY_CENTER,
+        materials: [
+          { label: "Presentation" },
+          { label: "Recording" },
+          { label: "Reflection" },
+        ],
+      },
+      {
+        week: "Week 4",
+        when: "Tues July 14, 12–2pm",
+        type: "Tuesday Talk",
+        topic:
+          "Drs. Ben Henwood & Sam Tsemberis: Housing First, Permanent Supportive Housing, and Program Models",
         location: CITY_CENTER,
         materials: [
           { label: "Presentation" },
@@ -193,7 +205,7 @@ export const program = {
       },
       {
         week: "Week 4",
-        when: "Wed July 15, 12:30–2pm",
+        when: "Wed July 15, 12–2pm",
         type: "Fellows Seminar 4",
         topic:
           "Dr. Amanda Landrian Gonzales and Data Team: Data, Homeless Count, and Demographic Survey Methods",
@@ -218,7 +230,7 @@ export const program = {
       },
       {
         week: "Week 5",
-        when: "Wed July 22, 12–1:30pm",
+        when: "Wed July 22, 12–2pm",
         type: "Fellows Seminar 5",
         topic:
           "Amy Stein & Shantel Cordon: Meet the USC Student Demographic Survey Team — Panel on Campus with Tour",
@@ -231,7 +243,7 @@ export const program = {
       },
       {
         week: "Week 6",
-        when: "Wed July 29, 12–1:30pm",
+        when: "Wed July 29, 12–2pm",
         type: "Fellows Seminar 6 / Culmination",
         topic:
           "Fellows Present their Findings: Capstone Presentations and Culmination (families welcome to attend)",
