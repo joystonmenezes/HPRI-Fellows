@@ -182,8 +182,7 @@ export const program = {
         week: "Week 4",
         when: "Tues July 14, 12–2pm",
         type: "Tuesday Talk",
-        topic:
-          "Drs. Ben Henwood & Sam Tsemberis: Housing First, Permanent Supportive Housing, and Program Models",
+        topic: "To be announced",
         location: CITY_CENTER,
         materials: [
           { label: "Presentation" },
@@ -205,7 +204,7 @@ export const program = {
       },
       {
         week: "Week 4",
-        when: "Wed July 15, 12–2pm",
+        when: "Wed July 15, 12:30–2:30pm",
         type: "Fellows Seminar 4",
         topic:
           "Dr. Amanda Landrian Gonzales and Data Team: Data, Homeless Count, and Demographic Survey Methods",
@@ -230,16 +229,39 @@ export const program = {
       },
       {
         week: "Week 5",
-        when: "Wed July 22, 12–2pm",
-        type: "Fellows Seminar 5",
+        when: "Wed July 22, 9:30–11:30am",
+        type: "Talk",
         topic:
-          "Amy Stein & Shantel Cordon: Meet the USC Student Demographic Survey Team — Panel on Campus with Tour",
+          "Drs. Ben Henwood & Sam Tsemberis: Housing First, Permanent Supportive Housing, and Program Models",
         location: SOCIAL_WORK_CENTER,
         materials: [
           { label: "Presentation" },
           { label: "Recording" },
           { label: "Reflection" },
         ],
+      },
+      {
+        week: "Week 5",
+        when: "Wed July 22, 12:30–2pm",
+        type: "Fellows Seminar 5",
+        topic:
+          "Amy Stein & Shantel Cordon: Meet the USC Student Demographic Survey Team — Panel on Campus with Tour at 2:30pm",
+        location: SOCIAL_WORK_CENTER,
+        materials: [
+          { label: "Presentation" },
+          { label: "Recording" },
+          { label: "Reflection" },
+        ],
+      },
+      {
+        week: "Week 5",
+        when: "Thurs July 23, 5–8pm",
+        type: "Community Service",
+        topic:
+          "Union Station Homeless Services Family Shelter — Adopt a Meal",
+        location:
+          "Union Station Homeless Services, 825 E. Orange Grove Blvd, Pasadena, CA 91104",
+        materials: [],
       },
       {
         week: "Week 6",
