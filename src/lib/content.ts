@@ -78,6 +78,9 @@ export type SiteContent = {
   };
   // Contacts
   contacts: { rows: ContactRow[]; locations: LocationBlock[] };
+  // CITI Training: an editable body (paragraphs separated by blank lines) plus
+  // a list of action buttons/links (each with its own publish flag).
+  citi: { body: string; links: Link[] };
 };
 
 const dataDir = path.join(process.cwd(), "data");
@@ -160,6 +163,10 @@ export function defaultContent(): SiteContent {
         name: l.name,
         lines: [...l.lines],
       })),
+    },
+    citi: {
+      body: program.citi.body,
+      links: program.citi.links.map((l) => ({ ...link(l), published: true })),
     },
   };
 }
@@ -504,6 +511,14 @@ function mergeContent(d: SiteContent, s: Partial<SiteContent>): SiteContent {
             : d.contacts.locations,
         }
       : d.contacts,
+    citi: s.citi
+      ? {
+          body: has(s.citi.body) ? clampStr(s.citi.body, 8000).trim() : d.citi.body,
+          links: Array.isArray(s.citi.links)
+            ? cleanQuickLinks(s.citi.links)
+            : d.citi.links,
+        }
+      : d.citi,
   };
 }
 
@@ -638,6 +653,11 @@ export async function saveContent(patch: Partial<SiteContent>): Promise<SiteCont
     clean.contacts = {
       rows: cleanContacts(patch.contacts?.rows),
       locations: cleanLocations(patch.contacts?.locations),
+    };
+  if ("citi" in patch)
+    clean.citi = {
+      body: clampStr(patch.citi?.body, 8000).trim(),
+      links: cleanQuickLinks(patch.citi?.links),
     };
 
   const next: SiteContent = { ...current, ...clean };

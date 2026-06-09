@@ -433,6 +433,20 @@ export const program = {
       },
     ],
   },
+
+  citi: {
+    body: "USC is committed to conducting research responsibly and ethically while protecting the rights, privacy, and well-being of research participants. To support this commitment, all students, researchers, and research personnel involved in human subjects research are required to complete Collaborative Institutional Training Initiative, or CITI, training.\n\nCITI training provides essential instruction on research ethics, participant protections, informed consent, privacy, confidentiality, and regulatory compliance. Completion of the required modules is often necessary before research activities can begin and helps ensure that studies are conducted with integrity and respect for participants.\n\nBecause CITI training is widely recognized by colleges, universities, hospitals, and research organizations across the United States, the knowledge and certification gained through this training may also be useful beyond USC.",
+    links: [
+      {
+        label: "CITI Training Guide",
+        href: "https://app.box.com/s/tz1zh7oxyqsg7h3b251wyy5qkiv4y0aj",
+      },
+      {
+        label: "CITI Training Overview",
+        href: "https://app.box.com/s/3eitnefcbysblonshf0suta45jxgn8nh",
+      },
+    ] as Link[],
+  },
 };
 
 // Single combined hero menu. "Submit an assignment" doubles as the jump to the

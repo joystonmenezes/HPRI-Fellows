@@ -11,6 +11,7 @@ export const SECTION_KEYS = [
   "materials",
   "glance",
   "presentations",
+  "citi",
   "rules",
   "mentors",
   "activities",
@@ -26,6 +27,7 @@ export const SECTION_LABELS: Record<SectionKey, string> = {
   materials: "External References",
   glance: "Program at a Glance",
   presentations: "Presentations",
+  citi: "CITI Training",
   rules: "Rules & Expectations",
   mentors: "Mentors",
   activities: "Self-Directed Activities",
@@ -42,6 +44,7 @@ export const SECTION_LABELS: Record<SectionKey, string> = {
 export const SECTION_NAV_LABELS: Partial<Record<SectionKey, string>> = {
   glance: "Program at a Glance",
   presentations: "Presentations",
+  citi: "CITI Training",
   rules: "Rules and Expectations",
   mentors: "Mentors",
   activities: "Self-Directed Activity",

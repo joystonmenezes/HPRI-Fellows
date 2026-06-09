@@ -47,6 +47,7 @@ export default async function Home() {
     assignments,
     capstone,
     contacts,
+    citi,
   } = content;
   const announcements = content.announcements.filter((a) => a.published);
   // Only show items the admin has left published (default is shown).
@@ -64,6 +65,13 @@ export default async function Home() {
       closesAt: a.closesAt ?? "",
     }));
   const contactRows = contacts.rows.filter((c) => c.published !== false);
+  // CITI Training: split the body into paragraphs on blank lines; show only the
+  // links the admin has left published.
+  const citiParagraphs = citi.body
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  const citiLinks = citi.links.filter((l) => l.published !== false);
 
   // Sections the admin has left visible, in the admin-chosen order.
   const visibleSections = content.sections.filter((s) => s.published);
@@ -182,6 +190,22 @@ export default async function Home() {
         <p className="mt-4 rounded-md border-l-4 border-cardinal bg-cardinal/5 p-4 text-sm text-neutral-700">
           {presentations.missedNote}
         </p>
+      </Section>
+    ),
+    citi: (
+      <Section id="citi" title="CITI Training">
+        <div className="space-y-4 text-neutral-700 leading-relaxed">
+          {citiParagraphs.map((p, i) => (
+            <p key={i}>{p}</p>
+          ))}
+        </div>
+        {citiLinks.length > 0 ? (
+          <div className="mt-5 flex flex-wrap gap-3">
+            {citiLinks.map((l) => (
+              <ActionLink key={l.label} link={l} />
+            ))}
+          </div>
+        ) : null}
       </Section>
     ),
     rules: (

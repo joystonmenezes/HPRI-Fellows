@@ -2220,3 +2220,123 @@ export function ContactsEditor({
     </CollapsibleForm>
   );
 }
+
+// ── CITI Training ───────────────────────────────────────────────────────────
+
+export function CitiEditor({
+  initial,
+}: {
+  initial: {
+    body: string;
+    links: { label: string; href?: string; published?: boolean }[];
+  };
+}) {
+  const [body, setBody] = useState(initial.body);
+  const [rows, setRows] = useState<QuickLinkRow[]>(
+    initial.links.map((l) => ({
+      label: l.label,
+      href: l.href || "",
+      published: l.published !== false,
+    })),
+  );
+  const { status, error, setStatus, save } = useSaver();
+  const touch = () => setStatus("idle");
+
+  function update(i: number, patch: Partial<QuickLinkRow>) {
+    setRows((rs) => rs.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
+    touch();
+  }
+
+  return (
+    <CollapsibleForm
+      onSubmit={(e) => {
+        e.preventDefault();
+        const links = rows
+          .map((r) => ({
+            label: r.label.trim(),
+            href: r.href.trim() || undefined,
+            published: r.published,
+          }))
+          .filter((r) => r.label);
+        save({ citi: { body: body.trim(), links } });
+      }}
+      id="citi"
+    >
+      <SectionHeading title="CITI Training" count={rows.length} />
+      <p className={sectionLead}>
+        The text and buttons in the “CITI Training” section. Separate paragraphs
+        with a blank line. Each button can have its own web address — leave it
+        blank to show a grey “soon” placeholder, and uncheck “Published” to hide
+        a button without deleting it.
+      </p>
+      <div className="mt-4">
+        <label className={labelClass}>Body text</label>
+        <textarea
+          rows={8}
+          className={inputClass}
+          value={body}
+          placeholder="Write one or more paragraphs, separated by a blank line…"
+          onChange={(e) => {
+            setBody(e.target.value);
+            touch();
+          }}
+        />
+      </div>
+      <div className="mt-4 space-y-3">
+        {rows.map((r, i) => (
+          <div key={i} className="rounded-md border border-neutral-200 p-3">
+            <div className="grid gap-2 sm:grid-cols-2">
+              <div>
+                <label className={labelClass}>Button text</label>
+                <input
+                  className={inputClass}
+                  value={r.label}
+                  onChange={(e) => update(i, { label: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>
+                  Web address{" "}
+                  <span className="font-normal text-neutral-400">(optional)</span>
+                </label>
+                <input
+                  className={inputClass}
+                  value={r.href}
+                  placeholder="https://…"
+                  onChange={(e) => update(i, { href: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="mt-3 flex items-center justify-between">
+              <PublishToggle
+                checked={r.published}
+                onChange={(v) => update(i, { published: v })}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setRows((rs) => rs.filter((_, idx) => idx !== i));
+                  touch();
+                }}
+                className="rounded-md border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 transition hover:bg-red-50"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={() => {
+          setRows((rs) => [...rs, { label: "", href: "", published: true }]);
+          touch();
+        }}
+        className={`${btnGhost} mt-3`}
+      >
+        + Add button
+      </button>
+      <SaveBar status={status} error={error} />
+    </CollapsibleForm>
+  );
+}

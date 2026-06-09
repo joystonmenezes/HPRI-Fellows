@@ -16,6 +16,7 @@ import {
   AssignmentsEditor,
   CapstoneEditor,
   ContactsEditor,
+  CitiEditor,
 } from "@/components/admin/ContentEditors";
 
 export const runtime = "nodejs";
@@ -75,6 +76,7 @@ export default async function AdminContentPage() {
               ["links", "External References"],
               ["glance", "At a glance"],
               ["presentations", "Presentations"],
+              ["citi", "CITI Training"],
               ["rules", "Rules"],
               ["mentors", "Mentors"],
               ["activities", "Activities"],
@@ -120,6 +122,9 @@ export default async function AdminContentPage() {
         </section>
         <section id="edit-presentations" className="scroll-mt-4">
           <PresentationsEditor initial={c.presentations} />
+        </section>
+        <section id="edit-citi" className="scroll-mt-4">
+          <CitiEditor initial={c.citi} />
         </section>
         <section id="edit-rules" className="scroll-mt-4">
           <RulesEditor initial={c.rules} />
