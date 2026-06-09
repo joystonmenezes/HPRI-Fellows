@@ -67,13 +67,24 @@ export default async function Home() {
 
   // Sections the admin has left visible, in the admin-chosen order.
   const visibleSections = content.sections.filter((s) => s.published);
-  // The floating nav mirrors that order + visibility (curated label subset).
-  const navItems = visibleSections
-    .map((s) => {
-      const label = SECTION_NAV_LABELS[s.key];
-      return label ? { label, href: `#${s.key}` } : null;
-    })
-    .filter((x): x is { label: string; href: string } => x !== null);
+  const contactsVisible = visibleSections.some((s) => s.key === "contacts");
+  // The floating nav mirrors the admin-chosen layout order + visibility, with
+  // News at the start (only when there are announcements) and Contact Us at the
+  // end (only when the Contacts section, which holds the form, is visible).
+  const navItems: { label: string; href: string }[] = [
+    ...(announcements.length > 0
+      ? [{ label: "News", href: "#news" }]
+      : []),
+    ...visibleSections
+      .map((s) => {
+        const label = SECTION_NAV_LABELS[s.key];
+        return label ? { label, href: `#${s.key}` } : null;
+      })
+      .filter((x): x is { label: string; href: string } => x !== null),
+    ...(contactsVisible
+      ? [{ label: "Contact Us", href: "#contact" }]
+      : []),
+  ];
 
   // Each main section's markup, keyed so the page can render them in any order.
   const sectionViews: Record<SectionKey, ReactNode> = {
@@ -245,7 +256,7 @@ export default async function Home() {
                   Activity
                 </th>
                 <th scope="col" className={tableTh}>
-                  Possible Deliverable
+                  Summary
                 </th>
               </tr>
             </thead>
@@ -364,7 +375,7 @@ export default async function Home() {
           ))}
         </div>
 
-        <div className="mt-8 border-t border-neutral-200 pt-6">
+        <div id="contact" className="mt-8 scroll-mt-28 border-t border-neutral-200 pt-6">
           <h3 className="font-serif text-xl font-bold text-cardinal">
             Send us a message
           </h3>
@@ -444,7 +455,10 @@ export default async function Home() {
 
       {/* News & Announcements */}
       {announcements.length > 0 ? (
-        <section className="reveal border-b border-neutral-200 bg-gold/10">
+        <section
+          id="news"
+          className="reveal scroll-mt-28 border-b border-neutral-200 bg-gold/10"
+        >
           <div className="mx-auto max-w-content px-4 py-8">
             <h2 className="font-serif text-2xl font-bold text-cardinal">
               News &amp; Announcements

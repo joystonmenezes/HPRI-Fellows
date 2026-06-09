@@ -35,15 +35,19 @@ export const SECTION_LABELS: Record<SectionKey, string> = {
 };
 
 // The subset of sections that also appear in the floating page nav, with the
-// label used there. Sections not listed here never show in the nav (e.g. Quick
-// Links / At a Glance / Capstone), matching the original curated nav.
+// label used there. Order in the nav follows the admin-chosen page layout, so
+// these labels just rename each section. `materials` (External References) is
+// intentionally omitted so it stays out of the nav. News and Contact Us are
+// added as bookends in page.tsx (they aren't reorderable layout sections).
 export const SECTION_NAV_LABELS: Partial<Record<SectionKey, string>> = {
-  submit: "Submit an assignment",
+  glance: "Program at a Glance",
   presentations: "Presentations",
-  rules: "Rules",
+  rules: "Rules and Expectations",
   mentors: "Mentors",
-  activities: "Activities",
-  contacts: "Contacts",
+  activities: "Self-Directed Activity",
+  submit: "Submit Assignments",
+  capstone: "Capstone Project",
+  contacts: "Important Contacts",
 };
 
 export type SectionConfig = { key: SectionKey; published: boolean };

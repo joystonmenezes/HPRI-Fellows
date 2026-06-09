@@ -8,7 +8,7 @@ export function SiteHeader() {
           <a href="#top" className="flex items-baseline gap-2">
             <span className="font-serif text-xl font-bold tracking-tight">USC</span>
             <span className="hidden text-sm font-semibold text-gold sm:inline">
-              HPRI Summer Fellows
+              HPRI Summer Fellowship
             </span>
           </a>
           <span className="hidden text-xs text-white/80 md:inline">
