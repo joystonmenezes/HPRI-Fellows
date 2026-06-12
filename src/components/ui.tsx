@@ -41,6 +41,14 @@ export function Section({
   );
 }
 
+// Resource/document links open in a new tab so visitors keep the hub page
+// open behind them. In-page anchors (#…) and mail/phone protocol links stay
+// in the same tab (a new tab for those would be pointless or jarring).
+function linkTargetProps(href: string): { target?: string; rel?: string } {
+  if (/^(#|mailto:|tel:)/i.test(href)) return {};
+  return { target: "_blank", rel: "noopener noreferrer" };
+}
+
 export function ActionLink({
   link,
   variant = "solid",
@@ -56,7 +64,11 @@ export function ActionLink({
         ? "bg-cardinal text-white hover:bg-cardinal-dark"
         : "border border-cardinal text-cardinal hover:bg-cardinal/5";
     return (
-      <a href={link.href} className={`${base} ${styles}`}>
+      <a
+        href={link.href}
+        className={`${base} ${styles}`}
+        {...linkTargetProps(link.href)}
+      >
         {link.label}
       </a>
     );
@@ -82,6 +94,7 @@ export function MaterialLinks({ items }: { items: Link[] }) {
             key={i}
             href={m.href}
             className="rounded bg-cardinal/10 px-2 py-1 text-xs font-medium text-cardinal hover:bg-cardinal/20"
+            {...linkTargetProps(m.href)}
           >
             {m.label}
           </a>
