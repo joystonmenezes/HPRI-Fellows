@@ -42,3 +42,6 @@ env:
     secret: smtp-pass
   - variable: ADMIN_EMAIL
     secret: admin-email
+  # Hidden copy of staff notifications (developer monitoring). Off the To line.
+  - variable: ADMIN_BCC
+    secret: admin-bcc

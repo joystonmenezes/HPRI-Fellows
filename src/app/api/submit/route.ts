@@ -4,7 +4,7 @@ import path from "node:path";
 import { addSubmission } from "@/lib/store";
 import { getBucket } from "@/lib/firebase";
 import { getContent, submissionState } from "@/lib/content";
-import { sendMail, getAdminEmail } from "@/lib/email";
+import { sendMail, getAdminEmail, getAdminBcc } from "@/lib/email";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -138,6 +138,7 @@ export async function POST(req: Request) {
       });
       await sendMail({
         to: admin,
+        bcc: getAdminBcc() || undefined,
         replyTo: email,
         subject: `New assignment submission: ${assignment} — ${name}`,
         text: `${name} (${email}) submitted the assignment "${assignment}".\n\nReceived: ${when} (Los Angeles time)\n\nOpen the admin dashboard to view or download the file — it is not attached to this email.`,

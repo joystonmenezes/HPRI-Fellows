@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { addSubmission } from "@/lib/store";
-import { sendMail, getAdminEmail } from "@/lib/email";
+import { sendMail, getAdminEmail, getAdminBcc } from "@/lib/email";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -48,6 +48,7 @@ export async function POST(req: Request) {
     if (admin) {
       await sendMail({
         to: admin,
+        bcc: getAdminBcc() || undefined,
         replyTo: email,
         subject: `[Fellows site] Contact: ${subject || "New message"}`,
         text: `New contact form submission\n\nName: ${name}\nEmail: ${email}\nSubject: ${subject || "(none)"}\n\n${message}`,
