@@ -29,3 +29,16 @@ env:
     secret: admin-password
   - variable: SESSION_SECRET
     secret: session-secret
+
+  # Email notifications (Gmail SMTP). SMTP_PASS must be a Gmail "App Password"
+  # (16 chars, requires 2-Step Verification), NOT the account password. The
+  # addresses are kept as secrets too so they stay out of this public repo.
+  # SMTP_HOST/SMTP_PORT use code defaults (smtp.gmail.com:465); MAIL_FROM is
+  # derived from SMTP_USER. Create these with:
+  #   firebase apphosting:secrets:set smtp-user|smtp-pass|admin-email
+  - variable: SMTP_USER
+    secret: smtp-user
+  - variable: SMTP_PASS
+    secret: smtp-pass
+  - variable: ADMIN_EMAIL
+    secret: admin-email

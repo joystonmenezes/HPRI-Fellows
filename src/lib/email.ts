@@ -8,7 +8,7 @@ const host = process.env.SMTP_HOST || "smtp.gmail.com";
 const port = Number(process.env.SMTP_PORT || 465);
 const user = process.env.SMTP_USER;
 const pass = process.env.SMTP_PASS;
-const from = process.env.MAIL_FROM || (user ? `HPRI Summer Fellows <${user}>` : "");
+const from = process.env.MAIL_FROM || (user ? `HPRI Summer Fellowship <${user}>` : "");
 const adminEmail = process.env.ADMIN_EMAIL || user || "";
 
 export const emailConfigured = Boolean(user && pass);
