@@ -1,8 +1,13 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { listSubmissions, type Submission } from "@/lib/store";
+import {
+  listSubmissions,
+  listDeletedSubmissions,
+  type Submission,
+} from "@/lib/store";
 import { LogoutButton } from "@/components/admin/LogoutButton";
 import { DeleteSubmissionButton } from "@/components/admin/DeleteSubmissionButton";
+import { RestoreSubmissionButton } from "@/components/admin/RestoreSubmissionButton";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,7 +34,11 @@ export default async function AdminDashboard() {
   const session = getSession();
   if (!session) redirect("/admin/login");
 
-  const all = (await listSubmissions()).slice().reverse(); // newest first
+  const [active, deleted] = await Promise.all([
+    listSubmissions(),
+    listDeletedSubmissions(),
+  ]);
+  const all = active.slice().reverse(); // newest first
   const contacts = all.filter((s) => s.kind === "contact");
   const assignments = all.filter((s) => s.kind === "assignment");
 
@@ -177,6 +186,86 @@ export default async function AdminDashboard() {
                       </td>
                       <td className={`${td} whitespace-nowrap`}>
                         <DeleteSubmissionButton id={s.id} what="message" />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
+        <section className="rounded-lg border border-neutral-200 bg-white p-5 shadow-sm">
+          <div className="flex items-baseline justify-between">
+            <h2 className="font-serif text-xl font-bold text-cardinal">
+              Recently deleted
+            </h2>
+            <span className="text-sm text-neutral-500">
+              {deleted.length} item{deleted.length === 1 ? "" : "s"}
+            </span>
+          </div>
+          <p className="mt-1 text-sm text-neutral-500">
+            Deleted submissions and messages are kept here so you can restore
+            them. Use Delete permanently to remove an item for good — this also
+            deletes any uploaded file and cannot be undone.
+          </p>
+          {deleted.length === 0 ? (
+            <p className="mt-3 text-sm text-neutral-500">
+              Nothing here. Deleted items will appear in this list.
+            </p>
+          ) : (
+            <div className="mt-3 overflow-x-auto">
+              <table className="w-full border-collapse text-sm">
+                <thead>
+                  <tr>
+                    <th className={th}>Deleted</th>
+                    <th className={th}>Type</th>
+                    <th className={th}>Name</th>
+                    <th className={th}>Email</th>
+                    <th className={th}>Subject / Assignment</th>
+                    <th className={th}>File</th>
+                    <th className={th}>
+                      <span className="sr-only">Actions</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {deleted.map((s) => (
+                    <tr key={s.id}>
+                      <td className={`${td} whitespace-nowrap text-neutral-600`}>
+                        {s.deletedAt ? fmtDate(s.deletedAt) : "—"}
+                      </td>
+                      <td className={td}>
+                        {s.kind === "assignment" ? "Submission" : "Message"}
+                      </td>
+                      <td className={`${td} font-medium text-neutral-900`}>
+                        {s.name}
+                      </td>
+                      <td className={td}>
+                        <a
+                          href={`mailto:${s.email}`}
+                          className="text-cardinal underline"
+                        >
+                          {s.email}
+                        </a>
+                      </td>
+                      <td className={td}>
+                        {s.subject || (
+                          <span className="text-neutral-400">—</span>
+                        )}
+                      </td>
+                      <td className={td}>{fileCell(s)}</td>
+                      <td className={`${td} whitespace-nowrap`}>
+                        <div className="flex items-center justify-end gap-2">
+                          <RestoreSubmissionButton id={s.id} />
+                          <DeleteSubmissionButton
+                            id={s.id}
+                            what={
+                              s.kind === "assignment" ? "submission" : "message"
+                            }
+                            mode="purge"
+                          />
+                        </div>
                       </td>
                     </tr>
                   ))}

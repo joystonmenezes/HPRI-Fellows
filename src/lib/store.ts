@@ -22,6 +22,10 @@ export type Submission = {
   filePath?: string;
   fileSize?: number;
   createdAt: string;
+  // Set to an ISO timestamp when the item is moved to "Recently Deleted".
+  // Absent/null means active. Soft-deleting keeps the row and any uploaded file
+  // so it can be restored; only a permanent delete removes them.
+  deletedAt?: string | null;
 };
 
 // ── Local-file fallback ─────────────────────────────────────────────────────
@@ -50,7 +54,8 @@ function writeFile(all: Submission[]): void {
 
 // ── Public API: Firestore (preferred) with local-file fallback ──────────────
 
-export async function listSubmissions(): Promise<Submission[]> {
+// All submissions, both active and soft-deleted (internal helper).
+async function listAll(): Promise<Submission[]> {
   const db = getDb();
   if (db) {
     try {
@@ -65,6 +70,18 @@ export async function listSubmissions(): Promise<Submission[]> {
     }
   }
   return readFile();
+}
+
+// Active submissions only — excludes anything moved to Recently Deleted.
+export async function listSubmissions(): Promise<Submission[]> {
+  return (await listAll()).filter((s) => !s.deletedAt);
+}
+
+// Soft-deleted submissions ("Recently Deleted"), most-recently-deleted first.
+export async function listDeletedSubmissions(): Promise<Submission[]> {
+  return (await listAll())
+    .filter((s) => s.deletedAt)
+    .sort((a, b) => String(b.deletedAt).localeCompare(String(a.deletedAt)));
 }
 
 export async function addSubmission(
@@ -125,5 +142,34 @@ export async function deleteSubmission(id: number): Promise<boolean> {
     }
   }
   writeFile(all.filter((s) => s.id !== id));
+  return true;
+}
+
+// Move a submission to "Recently Deleted" without destroying anything: the
+// Firestore doc and any uploaded file are kept, just flagged with a deletedAt
+// timestamp so it drops out of the active lists but can be restored later.
+export async function softDeleteSubmission(id: number): Promise<boolean> {
+  return setDeletedAt(id, new Date().toISOString());
+}
+
+// Restore a soft-deleted submission back into the active lists.
+export async function restoreSubmission(id: number): Promise<boolean> {
+  return setDeletedAt(id, null);
+}
+
+async function setDeletedAt(id: number, value: string | null): Promise<boolean> {
+  const db = getDb();
+  if (db) {
+    const snap = await db.collection(COLLECTION).where("id", "==", id).get();
+    if (snap.empty) return false;
+    for (const doc of snap.docs) {
+      await doc.ref.update({ deletedAt: value });
+    }
+    return true;
+  }
+
+  const all = readFile();
+  if (!all.some((s) => s.id === id)) return false;
+  writeFile(all.map((s) => (s.id === id ? { ...s, deletedAt: value } : s)));
   return true;
 }
