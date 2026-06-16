@@ -137,7 +137,7 @@ export default async function Home() {
     presentations: (
       <Section
         id="presentations"
-        title="Presentations, Publications & Gatherings"
+        title="Presentations & Gatherings : Seminars and Tuesday Talks"
         intro={presentations.intro}
       >
         <div className="overflow-x-auto">
