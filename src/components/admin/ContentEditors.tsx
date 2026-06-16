@@ -76,15 +76,23 @@ function reorder<T>(list: T[], from: number, to: number): T[] {
   return next;
 }
 
-// Drag-and-drop reordering for a vertical list. Spread rowProps(i) onto each
-// row to make the whole row a drag source and drop target; dragIndex/overIndex
+// Drag-and-drop reordering for a vertical list. Spread handleProps(i) onto the
+// grip handle (the drag source) and rowProps(i) onto the row/card container (the
+// drop target). Keeping them separate lets a card full of inputs stay editable —
+// only the little handle starts a drag, never the whole card. dragIndex/overIndex
 // drive the visual feedback. Dropping calls onReorder(from, to), so dragging the
 // last row onto the first moves it all the way up in a single gesture.
 function useDragReorder(onReorder: (from: number, to: number) => void) {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
 
-  function rowProps(i: number) {
+  function reset() {
+    setDragIndex(null);
+    setOverIndex(null);
+  }
+
+  // Goes on the grip handle only.
+  function handleProps(i: number) {
     return {
       draggable: true,
       onDragStart: (e: DragEvent) => {
@@ -97,25 +105,31 @@ function useDragReorder(onReorder: (from: number, to: number) => void) {
           /* ignore */
         }
       },
+      onDragEnd: reset,
+    };
+  }
+
+  // Goes on the row/card container. The dragIndex===null guard ignores drags
+  // that didn't start from one of our handles (e.g. selected text or a file
+  // dropped in), so they can't accidentally reorder the list.
+  function rowProps(i: number) {
+    return {
       onDragOver: (e: DragEvent) => {
+        if (dragIndex === null) return;
         e.preventDefault();
         e.dataTransfer.dropEffect = "move";
         if (overIndex !== i) setOverIndex(i);
       },
       onDrop: (e: DragEvent) => {
+        if (dragIndex === null) return;
         e.preventDefault();
-        if (dragIndex !== null && dragIndex !== i) onReorder(dragIndex, i);
-        setDragIndex(null);
-        setOverIndex(null);
-      },
-      onDragEnd: () => {
-        setDragIndex(null);
-        setOverIndex(null);
+        if (dragIndex !== i) onReorder(dragIndex, i);
+        reset();
       },
     };
   }
 
-  return { dragIndex, overIndex, rowProps };
+  return { dragIndex, overIndex, handleProps, rowProps };
 }
 
 // A six-dot drag affordance shown at the left of reorderable rows.
@@ -134,6 +148,60 @@ function GripIcon() {
       <circle cx="13" cy="10" r="1.3" />
       <circle cx="13" cy="16" r="1.3" />
     </svg>
+  );
+}
+
+type DragHandleProps = {
+  draggable: boolean;
+  onDragStart: (e: DragEvent) => void;
+  onDragEnd: () => void;
+};
+
+// The grab affordance that starts a drag. Only this handle is draggable, so the
+// inputs inside a card stay clickable and selectable. Spread handleProps(i) on it.
+function DragHandle({
+  className = "",
+  ...props
+}: DragHandleProps & { className?: string }) {
+  return (
+    <span
+      {...props}
+      title="Drag to reorder"
+      aria-label="Drag to reorder"
+      className={`shrink-0 cursor-grab text-neutral-400 transition hover:text-neutral-600 active:cursor-grabbing ${className}`}
+    >
+      <GripIcon />
+    </span>
+  );
+}
+
+// Visual feedback for a reorderable card/row: fade the one being dragged and ring
+// the one it is hovering over. Append the result to the element's own classes.
+function dragState(
+  drag: { dragIndex: number | null; overIndex: number | null },
+  i: number,
+): string {
+  if (drag.dragIndex === i) return "opacity-50";
+  if (drag.overIndex === i) return "ring-2 ring-cardinal/40";
+  return "";
+}
+
+// A small header (drag handle + position number) for editor cards that have no
+// heading of their own, so every reorderable list shows its current order.
+function ReorderHeader({
+  handle,
+  index,
+}: {
+  handle: DragHandleProps;
+  index: number;
+}) {
+  return (
+    <div className="mb-3 flex items-center gap-2">
+      <DragHandle {...handle} />
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-xs font-semibold text-neutral-500">
+        {index + 1}
+      </span>
+    </div>
   );
 }
 
@@ -257,6 +325,7 @@ export function SectionsEditor({ initial }: { initial: SectionConfig[] }) {
         {rows.map((r, i) => (
           <li
             key={r.key}
+            {...drag.handleProps(i)}
             {...drag.rowProps(i)}
             className={`flex items-center gap-2 rounded-md border bg-white px-3 py-2 shadow-sm transition ${
               drag.dragIndex === i
@@ -386,6 +455,7 @@ export function BannerEditor({
           {rows.map((src, i) => (
             <li
               key={`${i}-${src}`}
+              {...drag.handleProps(i)}
               {...drag.rowProps(i)}
               className={`flex items-center gap-3 rounded-md border bg-white px-3 py-2 shadow-sm transition ${
                 drag.dragIndex === i
@@ -612,6 +682,10 @@ export function QuickLinksEditor({
     setRows((rs) => rs.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
     setStatus("idle");
   }
+  const drag = useDragReorder((from, to) => {
+    setRows((rs) => reorder(rs, from, to));
+    setStatus("idle");
+  });
 
   return (
     <CollapsibleForm
@@ -636,7 +710,12 @@ export function QuickLinksEditor({
       </p>
       <div className="mt-4 space-y-3">
         {rows.map((r, i) => (
-          <div key={i} className="rounded-md border border-neutral-200 p-3">
+          <div
+            key={i}
+            {...drag.rowProps(i)}
+            className={`rounded-md border border-neutral-200 p-3 transition ${dragState(drag, i)}`}
+          >
+            <ReorderHeader handle={drag.handleProps(i)} index={i} />
             <div className="grid gap-2 sm:grid-cols-2">
               <div>
                 <label className={labelClass}>Button text</label>
@@ -716,6 +795,10 @@ export function AnnouncementsEditor({
     setItems((it) => it.map((a, idx) => (idx === i ? { ...a, ...patch } : a)));
     setStatus("idle");
   }
+  const drag = useDragReorder((from, to) => {
+    setItems((it) => reorder(it, from, to));
+    setStatus("idle");
+  });
 
   return (
     <CollapsibleForm
@@ -740,7 +823,12 @@ export function AnnouncementsEditor({
           <p className="text-sm text-neutral-500">No announcements yet.</p>
         ) : null}
         {items.map((a, i) => (
-          <div key={i} className="rounded-md border border-neutral-200 p-4">
+          <div
+            key={i}
+            {...drag.rowProps(i)}
+            className={`rounded-md border border-neutral-200 p-4 transition ${dragState(drag, i)}`}
+          >
+            <ReorderHeader handle={drag.handleProps(i)} index={i} />
             <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
               <div>
                 <label className={labelClass}>Title</label>
@@ -933,10 +1021,16 @@ function StringList({
   addLabel: string;
   placeholder?: string;
 }) {
+  const drag = useDragReorder((from, to) => onChange(reorder(items, from, to)));
   return (
     <div className="space-y-2">
       {items.map((s, i) => (
-        <div key={i} className="flex gap-2">
+        <div
+          key={i}
+          {...drag.rowProps(i)}
+          className={`flex items-center gap-2 rounded-md transition ${dragState(drag, i)}`}
+        >
+          <DragHandle {...drag.handleProps(i)} />
           <input
             className={inputClass}
             value={s}
@@ -1040,6 +1134,10 @@ export function GlanceEditor({
   const [note, setNote] = useState(initial.note);
   const { status, error, setStatus, save } = useSaver();
   const touch = () => setStatus("idle");
+  const drag = useDragReorder((from, to) => {
+    setRows((rs) => reorder(rs, from, to));
+    touch();
+  });
 
   return (
     <CollapsibleForm
@@ -1061,8 +1159,10 @@ export function GlanceEditor({
         {rows.map((r, i) => (
           <div
             key={i}
-            className="grid gap-2 sm:grid-cols-[14rem_1fr_auto] sm:items-start"
+            {...drag.rowProps(i)}
+            className={`grid items-start gap-2 rounded-md transition sm:grid-cols-[auto_14rem_1fr_auto] ${dragState(drag, i)}`}
           >
+            <DragHandle {...drag.handleProps(i)} className="mt-2" />
             <input
               className={inputClass}
               value={r.label}
@@ -1178,6 +1278,10 @@ export function PresentationsEditor({
     setRows((rs) => rs.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
     touch();
   };
+  const drag = useDragReorder((from, to) => {
+    setRows((rs) => reorder(rs, from, to));
+    touch();
+  });
 
   return (
     <CollapsibleForm
@@ -1204,7 +1308,7 @@ export function PresentationsEditor({
       <p className={sectionLead}>
         Seminars and Tuesday Talks. Add the Presentation / Recording / Reflection links
         as they become available — leave a link’s address blank to show a grey
-        “soon” chip.
+        “soon” chip. Drag a session by its handle to reorder the schedule.
       </p>
       <div className="mt-4">
         <label className={labelClass}>Intro</label>
@@ -1220,9 +1324,14 @@ export function PresentationsEditor({
       </div>
       <div className="mt-4 space-y-4">
         {rows.map((r, i) => (
-          <div key={i} className="rounded-md border border-neutral-200 p-4">
+          <div
+            key={i}
+            {...drag.rowProps(i)}
+            className={`rounded-md border border-neutral-200 p-4 transition ${dragState(drag, i)}`}
+          >
             <div className="flex items-center justify-between gap-3">
-              <span className="text-sm font-semibold text-neutral-700">
+              <span className="flex items-center gap-2 text-sm font-semibold text-neutral-700">
+                <DragHandle {...drag.handleProps(i)} />
                 Session {i + 1}
               </span>
               <div className="flex items-center gap-3">
@@ -1456,6 +1565,10 @@ export function MentorsEditor({
     setRows((rs) => rs.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
     touch();
   };
+  const drag = useDragReorder((from, to) => {
+    setRows((rs) => reorder(rs, from, to));
+    touch();
+  });
 
   return (
     <CollapsibleForm
@@ -1493,7 +1606,12 @@ export function MentorsEditor({
       </div>
       <div className="mt-4 space-y-3">
         {rows.map((r, i) => (
-          <div key={i} className="rounded-md border border-neutral-200 p-4">
+          <div
+            key={i}
+            {...drag.rowProps(i)}
+            className={`rounded-md border border-neutral-200 p-4 transition ${dragState(drag, i)}`}
+          >
+            <ReorderHeader handle={drag.handleProps(i)} index={i} />
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
               <div>
                 <label className={labelClass}>Fellow</label>
@@ -1605,6 +1723,10 @@ export function ActivitiesEditor({
     setRows((rs) => rs.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
     touch();
   };
+  const drag = useDragReorder((from, to) => {
+    setRows((rs) => reorder(rs, from, to));
+    touch();
+  });
 
   return (
     <CollapsibleForm
@@ -1646,7 +1768,12 @@ export function ActivitiesEditor({
       </div>
       <div className="mt-4 space-y-3">
         {rows.map((r, i) => (
-          <div key={i} className="rounded-md border border-neutral-200 p-4">
+          <div
+            key={i}
+            {...drag.rowProps(i)}
+            className={`rounded-md border border-neutral-200 p-4 transition ${dragState(drag, i)}`}
+          >
+            <ReorderHeader handle={drag.handleProps(i)} index={i} />
             <div className="grid gap-2 sm:grid-cols-2">
               <div>
                 <label className={labelClass}>Activity</label>
@@ -2039,6 +2166,14 @@ export function ContactsEditor({
     setLocations((ls) => ls.map((l, idx) => (idx === i ? { ...l, ...patch } : l)));
     touch();
   };
+  const dragRows = useDragReorder((from, to) => {
+    setRows((rs) => reorder(rs, from, to));
+    touch();
+  });
+  const dragLocs = useDragReorder((from, to) => {
+    setLocations((ls) => reorder(ls, from, to));
+    touch();
+  });
 
   return (
     <CollapsibleForm
@@ -2070,9 +2205,14 @@ export function ContactsEditor({
       </p>
       <div className="mt-4 space-y-3">
         {rows.map((r, i) => (
-          <div key={i} className="rounded-md border border-neutral-200 p-4">
+          <div
+            key={i}
+            {...dragRows.rowProps(i)}
+            className={`rounded-md border border-neutral-200 p-4 transition ${dragState(dragRows, i)}`}
+          >
             <div className="flex items-center justify-between gap-3">
-              <span className="text-sm font-semibold text-neutral-700">
+              <span className="flex items-center gap-2 text-sm font-semibold text-neutral-700">
+                <DragHandle {...dragRows.handleProps(i)} />
                 Contact {i + 1}
               </span>
               <div className="flex items-center gap-3">
@@ -2167,9 +2307,14 @@ export function ContactsEditor({
         <h3 className="text-sm font-semibold text-neutral-800">Address cards</h3>
         <div className="mt-3 space-y-3">
           {locations.map((l, i) => (
-            <div key={i} className="rounded-md border border-neutral-200 p-4">
+            <div
+              key={i}
+              {...dragLocs.rowProps(i)}
+              className={`rounded-md border border-neutral-200 p-4 transition ${dragState(dragLocs, i)}`}
+            >
               <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-neutral-700">
+                <span className="flex items-center gap-2 text-sm font-semibold text-neutral-700">
+                  <DragHandle {...dragLocs.handleProps(i)} />
                   Location {i + 1}
                 </span>
                 <button
@@ -2246,6 +2391,10 @@ export function CitiEditor({
     setRows((rs) => rs.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
     touch();
   }
+  const drag = useDragReorder((from, to) => {
+    setRows((rs) => reorder(rs, from, to));
+    touch();
+  });
 
   return (
     <CollapsibleForm
@@ -2284,7 +2433,12 @@ export function CitiEditor({
       </div>
       <div className="mt-4 space-y-3">
         {rows.map((r, i) => (
-          <div key={i} className="rounded-md border border-neutral-200 p-3">
+          <div
+            key={i}
+            {...drag.rowProps(i)}
+            className={`rounded-md border border-neutral-200 p-3 transition ${dragState(drag, i)}`}
+          >
+            <ReorderHeader handle={drag.handleProps(i)} index={i} />
             <div className="grid gap-2 sm:grid-cols-2">
               <div>
                 <label className={labelClass}>Button text</label>
