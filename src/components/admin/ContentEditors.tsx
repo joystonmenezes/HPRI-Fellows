@@ -1308,7 +1308,8 @@ export function PresentationsEditor({
       <p className={sectionLead}>
         Seminars and Tuesday Talks. Add the Presentation / Recording / Reflection links
         as they become available — leave a link’s address blank to show a grey
-        “soon” chip. Drag a session by its handle to reorder the schedule.
+        “soon” chip. Sessions are collapsed so the list is easy to reorder —
+        drag one by its handle, or click it to expand and edit.
       </p>
       <div className="mt-4">
         <label className={labelClass}>Intro</label>
@@ -1327,82 +1328,106 @@ export function PresentationsEditor({
           <div
             key={i}
             {...drag.rowProps(i)}
-            className={`rounded-md border border-neutral-200 p-4 transition ${dragState(drag, i)}`}
+            className={`rounded-md border border-neutral-200 transition ${dragState(drag, i)}`}
           >
-            <div className="flex items-center justify-between gap-3">
-              <span className="flex items-center gap-2 text-sm font-semibold text-neutral-700">
+            <details className="[&[open]_.sess-chevron]:rotate-180">
+              <summary className="flex cursor-pointer list-none items-center gap-2 p-3 [&::-webkit-details-marker]:hidden">
                 <DragHandle {...drag.handleProps(i)} />
-                Session {i + 1}
-              </span>
-              <div className="flex items-center gap-3">
-                <PublishToggle
-                  checked={r.published}
-                  onChange={(v) => setRow(i, { published: v })}
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setRows((rs) => rs.filter((_, idx) => idx !== i));
-                    touch();
-                  }}
-                  className="rounded-md border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 transition hover:bg-red-50"
+                <span className="shrink-0 text-sm font-semibold text-neutral-700">
+                  Session {i + 1}
+                </span>
+                {r.when ? (
+                  <span className="min-w-0 truncate text-sm text-neutral-500">
+                    · {r.when}
+                  </span>
+                ) : null}
+                {!r.published ? (
+                  <span className="shrink-0 rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-500">
+                    Hidden
+                  </span>
+                ) : null}
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className="sess-chevron ml-auto h-4 w-4 shrink-0 text-neutral-400 transition-transform duration-200"
                 >
-                  Delete session
-                </button>
+                  <path d="M5 7.5l5 5 5-5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </summary>
+              <div className="border-t border-neutral-200 p-4">
+                <div className="flex items-center justify-end gap-3">
+                  <PublishToggle
+                    checked={r.published}
+                    onChange={(v) => setRow(i, { published: v })}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRows((rs) => rs.filter((_, idx) => idx !== i));
+                      touch();
+                    }}
+                    className="rounded-md border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 transition hover:bg-red-50"
+                  >
+                    Delete session
+                  </button>
+                </div>
+                <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                  <div>
+                    <label className={labelClass}>Week</label>
+                    <input
+                      className={inputClass}
+                      value={r.week}
+                      onChange={(e) => setRow(i, { week: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Date / time</label>
+                    <input
+                      className={inputClass}
+                      value={r.when}
+                      onChange={(e) => setRow(i, { when: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Type</label>
+                    <input
+                      className={inputClass}
+                      value={r.type}
+                      onChange={(e) => setRow(i, { type: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="mt-2">
+                  <label className={labelClass}>Topic / presenter</label>
+                  <textarea
+                    rows={2}
+                    className={inputClass}
+                    value={r.topic}
+                    onChange={(e) => setRow(i, { topic: e.target.value })}
+                  />
+                </div>
+                <div className="mt-2">
+                  <label className={labelClass}>Location / format</label>
+                  <input
+                    className={inputClass}
+                    value={r.location}
+                    onChange={(e) => setRow(i, { location: e.target.value })}
+                  />
+                </div>
+                <div className="mt-3">
+                  <label className={labelClass}>Materials</label>
+                  <div className="mt-1">
+                    <LinksList
+                      links={r.materials}
+                      onChange={(materials) => setRow(i, { materials })}
+                    />
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className="mt-3 grid gap-2 sm:grid-cols-3">
-              <div>
-                <label className={labelClass}>Week</label>
-                <input
-                  className={inputClass}
-                  value={r.week}
-                  onChange={(e) => setRow(i, { week: e.target.value })}
-                />
-              </div>
-              <div>
-                <label className={labelClass}>Date / time</label>
-                <input
-                  className={inputClass}
-                  value={r.when}
-                  onChange={(e) => setRow(i, { when: e.target.value })}
-                />
-              </div>
-              <div>
-                <label className={labelClass}>Type</label>
-                <input
-                  className={inputClass}
-                  value={r.type}
-                  onChange={(e) => setRow(i, { type: e.target.value })}
-                />
-              </div>
-            </div>
-            <div className="mt-2">
-              <label className={labelClass}>Topic / presenter</label>
-              <textarea
-                rows={2}
-                className={inputClass}
-                value={r.topic}
-                onChange={(e) => setRow(i, { topic: e.target.value })}
-              />
-            </div>
-            <div className="mt-2">
-              <label className={labelClass}>Location / format</label>
-              <input
-                className={inputClass}
-                value={r.location}
-                onChange={(e) => setRow(i, { location: e.target.value })}
-              />
-            </div>
-            <div className="mt-3">
-              <label className={labelClass}>Materials</label>
-              <div className="mt-1">
-                <LinksList
-                  links={r.materials}
-                  onChange={(materials) => setRow(i, { materials })}
-                />
-              </div>
-            </div>
+            </details>
           </div>
         ))}
       </div>

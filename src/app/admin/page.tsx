@@ -195,16 +195,30 @@ export default async function AdminDashboard() {
           )}
         </section>
 
-        <section className="rounded-lg border border-neutral-200 bg-white p-5 shadow-sm">
-          <div className="flex items-baseline justify-between">
-            <h2 className="font-serif text-xl font-bold text-cardinal">
-              Recently deleted
-            </h2>
-            <span className="text-sm text-neutral-500">
-              {deleted.length} item{deleted.length === 1 ? "" : "s"}
-            </span>
-          </div>
-          <p className="mt-1 text-sm text-neutral-500">
+        <section className="rounded-lg border border-neutral-200 bg-white shadow-sm">
+          <details className="[&[open]_.rd-chevron]:rotate-180">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-5 [&::-webkit-details-marker]:hidden">
+              <h2 className="font-serif text-xl font-bold text-cardinal">
+                Recently deleted
+              </h2>
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-neutral-500">
+                  {deleted.length} item{deleted.length === 1 ? "" : "s"}
+                </span>
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className="rd-chevron h-5 w-5 shrink-0 text-cardinal transition-transform duration-200"
+                >
+                  <path d="M5 7.5l5 5 5-5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+            </summary>
+            <div className="border-t border-neutral-200 p-5 pt-4">
+          <p className="text-sm text-neutral-500">
             Deleted submissions and messages are kept here so you can restore
             them. Use Delete permanently to remove an item for good — this also
             deletes any uploaded file and cannot be undone.
@@ -273,6 +287,8 @@ export default async function AdminDashboard() {
               </table>
             </div>
           )}
+            </div>
+          </details>
         </section>
       </main>
     </div>
