@@ -354,6 +354,7 @@ function cleanAssignments(v: unknown): AssignmentRow[] {
     .map((x) => {
       const r = x as Partial<AssignmentRow>;
       const submit = cleanLink(r.submit ?? { label: "Submit here" });
+      const materialHref = safeHref(r.materialHref);
       return {
         assignment: clampStr(r.assignment, 200).trim(),
         due: clampStr(r.due, 80).trim(),
@@ -363,7 +364,8 @@ function cleanAssignments(v: unknown): AssignmentRow[] {
         active: r.active === true,
         opensAt: cleanDateTime(r.opensAt),
         closesAt: cleanDateTime(r.closesAt),
-        materialHref: safeHref(r.materialHref),
+        // Only include when set — Firestore rejects `undefined` field values.
+        ...(materialHref ? { materialHref } : {}),
       };
     })
     .filter((r) => r.assignment.length > 0)
