@@ -363,6 +363,7 @@ function cleanAssignments(v: unknown): AssignmentRow[] {
         active: r.active === true,
         opensAt: cleanDateTime(r.opensAt),
         closesAt: cleanDateTime(r.closesAt),
+        materialHref: safeHref(r.materialHref),
       };
     })
     .filter((r) => r.assignment.length > 0)

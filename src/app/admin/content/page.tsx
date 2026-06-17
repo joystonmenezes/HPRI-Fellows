@@ -73,7 +73,7 @@ export default async function AdminContentPage() {
               ["news", "News"],
               ["banner", "Banner"],
               ["basics", "Header & intro"],
-              ["links", "External References"],
+              ["links", "Fellowship Documents"],
               ["glance", "At a glance"],
               ["presentations", "Presentations"],
               ["citi", "CITI Training"],

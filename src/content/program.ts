@@ -43,6 +43,9 @@ export type AssignmentRow = {
   // `active` is true.
   opensAt?: string;
   closesAt?: string;
+  // Optional link to assignment materials/instructions, opened in a new tab via
+  // an "Assignment material" button next to the Submit button.
+  materialHref?: string;
 };
 
 export type ContactRow = {

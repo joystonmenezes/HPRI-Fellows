@@ -11,6 +11,7 @@ type Row = {
   state: SubmitState;
   opensAt?: string;
   closesAt?: string;
+  materialHref?: string;
 };
 
 const closedLabel: Record<Exclude<SubmitState, "open">, string> = {
@@ -74,36 +75,55 @@ export function SubmitAssignments({ rows }: { rows: Row[] }) {
                 </td>
                 <td className={`${tableTd} whitespace-nowrap`}>{a.due}</td>
                 <td className={tableTd}>
-                  {a.state === "open" ? (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => setOpen(a.assignment)}
-                        className="inline-flex items-center rounded bg-cardinal px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-cardinal-dark"
+                  <div className="flex flex-col items-start gap-1.5">
+                    {a.materialHref ? (
+                      <a
+                        href={a.materialHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center rounded border border-cardinal px-3 py-1.5 text-xs font-semibold text-cardinal transition hover:bg-cardinal/5"
                       >
-                        Submit here
-                      </button>
-                      {a.closesAt ? (
-                        <p className="mt-1 text-xs text-neutral-500">
-                          Open until {formatWallTime(a.closesAt)}
-                        </p>
-                      ) : null}
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        type="button"
-                        disabled
-                        title={windowHint(a) || "Submissions are not open"}
-                        className="inline-flex cursor-not-allowed items-center rounded bg-neutral-200 px-3 py-1.5 text-xs font-semibold text-neutral-500"
+                        Assignment material ↗
+                      </a>
+                    ) : (
+                      <span
+                        title="No material posted yet"
+                        className="inline-flex cursor-not-allowed items-center rounded border border-neutral-200 bg-neutral-50 px-3 py-1.5 text-xs font-semibold text-neutral-400"
                       >
-                        {closedLabel[a.state]}
-                      </button>
-                      {windowHint(a) ? (
-                        <p className="mt-1 text-xs text-neutral-400">{windowHint(a)}</p>
-                      ) : null}
-                    </>
-                  )}
+                        Assignment material
+                      </span>
+                    )}
+                    {a.state === "open" ? (
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() => setOpen(a.assignment)}
+                          className="inline-flex items-center rounded bg-cardinal px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-cardinal-dark"
+                        >
+                          Submit here
+                        </button>
+                        {a.closesAt ? (
+                          <p className="mt-1 text-xs text-neutral-500">
+                            Open until {formatWallTime(a.closesAt)}
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <div>
+                        <button
+                          type="button"
+                          disabled
+                          title={windowHint(a) || "Submissions are not open"}
+                          className="inline-flex cursor-not-allowed items-center rounded bg-neutral-200 px-3 py-1.5 text-xs font-semibold text-neutral-500"
+                        >
+                          {closedLabel[a.state]}
+                        </button>
+                        {windowHint(a) ? (
+                          <p className="mt-1 text-xs text-neutral-400">{windowHint(a)}</p>
+                        ) : null}
+                      </div>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}

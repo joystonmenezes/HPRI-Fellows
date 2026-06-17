@@ -702,9 +702,9 @@ export function QuickLinksEditor({
       }}
       id="links"
     >
-      <h2 className="font-serif text-xl font-bold text-cardinal">External References</h2>
+      <h2 className="font-serif text-xl font-bold text-cardinal">Fellowship Documents</h2>
       <p className="mt-1 text-sm text-neutral-600">
-        The buttons in the “External References” grid. Leave the web address blank to
+        The buttons in the “Fellowship Documents” grid. Leave the web address blank to
         show a grey “soon” placeholder until the document is ready. Uncheck
         “Published” to hide a link without deleting it.
       </p>
@@ -1809,7 +1809,7 @@ export function ActivitiesEditor({
                 />
               </div>
               <div>
-                <label className={labelClass}>Possible deliverable</label>
+                <label className={labelClass}>Summary</label>
                 <input
                   className={inputClass}
                   value={r.deliverable}
@@ -1878,6 +1878,7 @@ type AssignR = {
   active: boolean;
   opensAt: string;
   closesAt: string;
+  materialHref: string;
 };
 
 export function AssignmentsEditor({
@@ -1892,6 +1893,7 @@ export function AssignmentsEditor({
       active?: boolean;
       opensAt?: string;
       closesAt?: string;
+      materialHref?: string;
     }[];
     link: { label: string; href?: string };
   };
@@ -1905,6 +1907,7 @@ export function AssignmentsEditor({
       active: r.active === true,
       opensAt: r.opensAt ?? "",
       closesAt: r.closesAt ?? "",
+      materialHref: r.materialHref ?? "",
     })),
   );
   const [linkRow, setLinkRow] = useState<LinkRow>(toRow(initial.link));
@@ -1914,6 +1917,10 @@ export function AssignmentsEditor({
     setRows((rs) => rs.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
     touch();
   };
+  const drag = useDragReorder((from, to) => {
+    setRows((rs) => reorder(rs, from, to));
+    touch();
+  });
 
   return (
     <CollapsibleForm
@@ -1927,6 +1934,7 @@ export function AssignmentsEditor({
             active: r.active,
             opensAt: r.active ? r.opensAt : "",
             closesAt: r.active ? r.closesAt : "",
+            materialHref: r.materialHref.trim(),
           }))
           .filter((r) => r.assignment);
         save({ assignments: { intro: intro.trim(), rows: clean, link: fromRow(linkRow) } });
@@ -1936,7 +1944,10 @@ export function AssignmentsEditor({
       <SectionHeading title="Assignments" count={rows.length} />
       <p className={sectionLead}>
         The assignment names and due dates in the “Submit Assignments” table.
-        Each one gets its own “Submit here” button automatically.
+        Each one gets its own “Submit here” button automatically. Rows are
+        collapsed so the list is easy to reorder — drag one by its handle, or
+        click it to expand and edit. Add an optional material link to show an
+        “Assignment material” button next to Submit.
       </p>
       <div className="mt-4">
         <label className={labelClass}>Intro</label>
@@ -1952,77 +1963,123 @@ export function AssignmentsEditor({
       </div>
       <div className="mt-4 space-y-3">
         {rows.map((r, i) => (
-          <div key={i} className="rounded-md border border-neutral-200 p-4">
-            <div className="grid gap-2 sm:grid-cols-[1fr_12rem]">
-              <div>
-                <label className={labelClass}>Assignment</label>
-                <input
-                  className={inputClass}
-                  value={r.assignment}
-                  onChange={(e) => setRow(i, { assignment: e.target.value })}
-                />
-              </div>
-              <div>
-                <label className={labelClass}>Due date</label>
-                <input
-                  className={inputClass}
-                  value={r.due}
-                  placeholder="TBD"
-                  onChange={(e) => setRow(i, { due: e.target.value })}
-                />
-              </div>
-            </div>
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-              <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-                <PublishToggle
-                  checked={r.published}
-                  onChange={(v) => setRow(i, { published: v })}
-                />
-                <ActivateToggle
-                  checked={r.active}
-                  onChange={(v) => setRow(i, { active: v })}
-                />
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setRows((rs) => rs.filter((_, idx) => idx !== i));
-                  touch();
-                }}
-                className="rounded-md border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 transition hover:bg-red-50"
-              >
-                Remove
-              </button>
-            </div>
-            {r.active ? (
-              <div className="mt-3 rounded-md bg-neutral-50 p-3">
-                <div className="grid gap-3 sm:grid-cols-2">
+          <div
+            key={i}
+            {...drag.rowProps(i)}
+            className={`rounded-md border border-neutral-200 transition ${dragState(drag, i)}`}
+          >
+            <details className="[&[open]_.asg-chevron]:rotate-180">
+              <summary className="flex cursor-pointer list-none items-center gap-2 p-3 [&::-webkit-details-marker]:hidden">
+                <DragHandle {...drag.handleProps(i)} />
+                <span className="min-w-0 truncate text-sm font-semibold text-neutral-700">
+                  {r.assignment.trim() || "Untitled assignment"}
+                </span>
+                {r.active ? (
+                  <span className="shrink-0 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+                    Open
+                  </span>
+                ) : null}
+                {!r.published ? (
+                  <span className="shrink-0 rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-500">
+                    Hidden
+                  </span>
+                ) : null}
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className="asg-chevron ml-auto h-4 w-4 shrink-0 text-neutral-400 transition-transform duration-200"
+                >
+                  <path d="M5 7.5l5 5 5-5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </summary>
+              <div className="border-t border-neutral-200 p-4">
+                <div className="grid gap-2 sm:grid-cols-[1fr_12rem]">
                   <div>
-                    <label className={labelClass}>Opens (optional)</label>
+                    <label className={labelClass}>Assignment</label>
                     <input
-                      type="datetime-local"
                       className={inputClass}
-                      value={r.opensAt}
-                      onChange={(e) => setRow(i, { opensAt: e.target.value })}
+                      value={r.assignment}
+                      onChange={(e) => setRow(i, { assignment: e.target.value })}
                     />
                   </div>
                   <div>
-                    <label className={labelClass}>Closes / deadline (optional)</label>
+                    <label className={labelClass}>Due date</label>
                     <input
-                      type="datetime-local"
                       className={inputClass}
-                      value={r.closesAt}
-                      onChange={(e) => setRow(i, { closesAt: e.target.value })}
+                      value={r.due}
+                      placeholder="TBD"
+                      onChange={(e) => setRow(i, { due: e.target.value })}
                     />
                   </div>
                 </div>
-                <p className="mt-2 text-xs text-neutral-500">
-                  Los Angeles time. Leave blank for no limit. The “Submit here”
-                  button is greyed out before the open time and after the
-                  deadline.
-                </p>
+                <div className="mt-3">
+                  <label className={labelClass}>
+                    Assignment material link{" "}
+                    <span className="font-normal text-neutral-400">(optional)</span>
+                  </label>
+                  <input
+                    className={inputClass}
+                    value={r.materialHref}
+                    placeholder="https://… (opens in a new tab)"
+                    onChange={(e) => setRow(i, { materialHref: e.target.value })}
+                  />
+                </div>
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+                    <PublishToggle
+                      checked={r.published}
+                      onChange={(v) => setRow(i, { published: v })}
+                    />
+                    <ActivateToggle
+                      checked={r.active}
+                      onChange={(v) => setRow(i, { active: v })}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRows((rs) => rs.filter((_, idx) => idx !== i));
+                      touch();
+                    }}
+                    className="rounded-md border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 transition hover:bg-red-50"
+                  >
+                    Remove
+                  </button>
+                </div>
+                {r.active ? (
+                  <div className="mt-3 rounded-md bg-neutral-50 p-3">
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div>
+                        <label className={labelClass}>Opens (optional)</label>
+                        <input
+                          type="datetime-local"
+                          className={inputClass}
+                          value={r.opensAt}
+                          onChange={(e) => setRow(i, { opensAt: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <label className={labelClass}>Closes / deadline (optional)</label>
+                        <input
+                          type="datetime-local"
+                          className={inputClass}
+                          value={r.closesAt}
+                          onChange={(e) => setRow(i, { closesAt: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <p className="mt-2 text-xs text-neutral-500">
+                      Los Angeles time. Leave blank for no limit. The “Submit here”
+                      button is greyed out before the open time and after the
+                      deadline.
+                    </p>
+                  </div>
+                ) : null}
               </div>
-            ) : null}
+            </details>
           </div>
         ))}
       </div>
@@ -2038,6 +2095,7 @@ export function AssignmentsEditor({
               active: false,
               opensAt: "",
               closesAt: "",
+              materialHref: "",
             },
           ]);
           touch();

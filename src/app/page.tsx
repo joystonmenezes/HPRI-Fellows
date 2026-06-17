@@ -63,6 +63,7 @@ export default async function Home() {
       state: submissionState(a),
       opensAt: a.opensAt ?? "",
       closesAt: a.closesAt ?? "",
+      materialHref: a.materialHref ?? "",
     }));
   const contactRows = contacts.rows.filter((c) => c.published !== false);
   // CITI Training: split the body into paragraphs on blank lines; show only the
@@ -99,7 +100,7 @@ export default async function Home() {
     materials: (
       <Section
         id="materials"
-        title="External References"
+        title="Fellowship Documents"
         intro="External references and key program links. Items marked “soon” are activated as documents and links are uploaded."
       >
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
