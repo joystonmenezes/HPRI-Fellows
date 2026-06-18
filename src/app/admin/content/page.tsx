@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
+import { type ReactNode } from "react";
 import { getSession } from "@/lib/auth";
 import { getContent } from "@/lib/content";
+import { type SectionKey } from "@/content/sections";
 import {
   AccordionProvider,
   SectionsEditor,
@@ -26,6 +28,71 @@ export const dynamic = "force-dynamic";
 export default async function AdminContentPage() {
   if (!getSession()) redirect("/admin/login");
   const c = await getContent();
+
+  // Each reorderable content section's editor, keyed by section key, with its
+  // anchor id and the "Jump to" label. The cards below — and the jump links —
+  // are rendered in the admin-chosen Page-layout order (c.sections), so saving a
+  // new layout reorders them to match.
+  const sectionEditors: Record<
+    SectionKey,
+    { anchor: string; nav: string; node: ReactNode }
+  > = {
+    materials: {
+      anchor: "links",
+      nav: "Fellowship Documents",
+      node: <QuickLinksEditor initial={c.quickLinks} />,
+    },
+    glance: {
+      anchor: "glance",
+      nav: "At a glance",
+      node: <GlanceEditor initial={c.glance} />,
+    },
+    presentations: {
+      anchor: "presentations",
+      nav: "Presentations",
+      node: <PresentationsEditor initial={c.presentations} />,
+    },
+    citi: {
+      anchor: "citi",
+      nav: "CITI Training",
+      node: <CitiEditor initial={c.citi} />,
+    },
+    rules: {
+      anchor: "rules",
+      nav: "Rules",
+      node: <RulesEditor initial={c.rules} />,
+    },
+    mentors: {
+      anchor: "mentors",
+      nav: "Mentors",
+      node: <MentorsEditor initial={c.mentors} />,
+    },
+    activities: {
+      anchor: "activities",
+      nav: "Activities",
+      node: <ActivitiesEditor initial={c.activities} />,
+    },
+    submit: {
+      anchor: "assignments",
+      nav: "Assignments",
+      node: <AssignmentsEditor initial={c.assignments} />,
+    },
+    capstone: {
+      anchor: "capstone",
+      nav: "Capstone",
+      node: <CapstoneEditor initial={c.capstone} />,
+    },
+    readings: {
+      anchor: "readings",
+      nav: "Readings",
+      node: <RecommendedReadingsEditor initial={c.recommendedReadings} />,
+    },
+    contacts: {
+      anchor: "contacts",
+      nav: "Contacts",
+      node: <ContactsEditor initial={c.contacts} />,
+    },
+  };
 
   return (
     <div className="min-h-screen bg-neutral-100">
@@ -74,17 +141,13 @@ export default async function AdminContentPage() {
               ["news", "News"],
               ["banner", "Banner"],
               ["basics", "Header & intro"],
-              ["links", "Fellowship Documents"],
-              ["glance", "At a glance"],
-              ["presentations", "Presentations"],
-              ["citi", "CITI Training"],
-              ["rules", "Rules"],
-              ["mentors", "Mentors"],
-              ["activities", "Activities"],
-              ["assignments", "Assignments"],
-              ["capstone", "Capstone"],
-              ["readings", "Readings"],
-              ["contacts", "Contacts"],
+              ...c.sections.map(
+                (s) =>
+                  [
+                    sectionEditors[s.key].anchor,
+                    sectionEditors[s.key].nav,
+                  ] as [string, string],
+              ),
             ].map(([id, label], i) => (
               <span key={id}>
                 {i > 0 ? <span className="text-neutral-300"> · </span> : null}
@@ -116,39 +179,15 @@ export default async function AdminContentPage() {
             }}
           />
         </section>
-        <section id="edit-links" className="scroll-mt-4">
-          <QuickLinksEditor initial={c.quickLinks} />
-        </section>
-        <section id="edit-glance" className="scroll-mt-4">
-          <GlanceEditor initial={c.glance} />
-        </section>
-        <section id="edit-presentations" className="scroll-mt-4">
-          <PresentationsEditor initial={c.presentations} />
-        </section>
-        <section id="edit-citi" className="scroll-mt-4">
-          <CitiEditor initial={c.citi} />
-        </section>
-        <section id="edit-rules" className="scroll-mt-4">
-          <RulesEditor initial={c.rules} />
-        </section>
-        <section id="edit-mentors" className="scroll-mt-4">
-          <MentorsEditor initial={c.mentors} />
-        </section>
-        <section id="edit-activities" className="scroll-mt-4">
-          <ActivitiesEditor initial={c.activities} />
-        </section>
-        <section id="edit-assignments" className="scroll-mt-4">
-          <AssignmentsEditor initial={c.assignments} />
-        </section>
-        <section id="edit-capstone" className="scroll-mt-4">
-          <CapstoneEditor initial={c.capstone} />
-        </section>
-        <section id="edit-readings" className="scroll-mt-4">
-          <RecommendedReadingsEditor initial={c.recommendedReadings} />
-        </section>
-        <section id="edit-contacts" className="scroll-mt-4">
-          <ContactsEditor initial={c.contacts} />
-        </section>
+        {c.sections.map((s) => (
+          <section
+            key={s.key}
+            id={`edit-${sectionEditors[s.key].anchor}`}
+            className="scroll-mt-4"
+          >
+            {sectionEditors[s.key].node}
+          </section>
+        ))}
         </AccordionProvider>
       </main>
     </div>

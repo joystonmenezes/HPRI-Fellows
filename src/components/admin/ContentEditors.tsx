@@ -10,6 +10,7 @@ import {
   type ChangeEvent,
   type DragEvent,
 } from "react";
+import { useRouter } from "next/navigation";
 import { type SectionConfig, SECTION_LABELS } from "@/content/sections";
 
 const labelClass = "block text-sm font-semibold text-neutral-800";
@@ -53,15 +54,17 @@ function SaveBar({ status, error }: { status: SaveStatus; error: string }) {
 function useSaver() {
   const [status, setStatus] = useState<SaveStatus>("idle");
   const [error, setError] = useState("");
-  async function save(patch: Record<string, unknown>) {
+  async function save(patch: Record<string, unknown>): Promise<boolean> {
     setStatus("saving");
     setError("");
     try {
       await postContent(patch);
       setStatus("saved");
+      return true;
     } catch (err) {
       setStatus("error");
       setError(err instanceof Error ? err.message : "Could not save changes.");
+      return false;
     }
   }
   return { status, error, setStatus, save };
@@ -292,6 +295,7 @@ function CollapsibleForm({
 export function SectionsEditor({ initial }: { initial: SectionConfig[] }) {
   const [rows, setRows] = useState<SectionConfig[]>(initial.map((r) => ({ ...r })));
   const { status, error, setStatus, save } = useSaver();
+  const router = useRouter();
   const touch = () => setStatus("idle");
 
   function toggle(i: number) {
@@ -309,9 +313,11 @@ export function SectionsEditor({ initial }: { initial: SectionConfig[] }) {
   return (
     <CollapsibleForm
       id="sections"
-      onSubmit={(e) => {
+      onSubmit={async (e) => {
         e.preventDefault();
-        save({ sections: rows });
+        // On a successful save, refresh so the editor cards below re-render in
+        // the new Page-layout order.
+        if (await save({ sections: rows })) router.refresh();
       }}
     >
       <h2 className="font-serif text-xl font-bold text-cardinal">Page layout</h2>
