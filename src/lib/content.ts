@@ -76,6 +76,11 @@ export type SiteContent = {
     guideLink: Link;
     published: boolean;
   };
+  // Recommended Readings: a short list of title + URL links.
+  recommendedReadings: {
+    intro: string;
+    rows: { title: string; url: string; published: boolean }[];
+  };
   // Contacts
   contacts: { rows: ContactRow[]; locations: LocationBlock[] };
   // CITI Training: an editable body (paragraphs separated by blank lines) plus
@@ -157,6 +162,7 @@ export function defaultContent(): SiteContent {
       guideLink: link(program.capstone.guideLink),
       published: true,
     },
+    recommendedReadings: { intro: "", rows: [] },
     contacts: {
       rows: program.contacts.rows.map((c) => ({ ...c, published: true })),
       locations: program.contacts.locations.map((l) => ({
@@ -372,6 +378,25 @@ function cleanAssignments(v: unknown): AssignmentRow[] {
     .slice(0, 200);
 }
 
+function cleanReadings(
+  v: unknown,
+): { title: string; url: string; published: boolean }[] {
+  if (!Array.isArray(v)) return [];
+  return v
+    .map((x) => {
+      const r = x as { title?: unknown; url?: unknown; published?: unknown };
+      return {
+        title: clampStr(r.title, 300).trim(),
+        // safeHref returns undefined for empty/invalid; store "" so Firestore
+        // (which rejects undefined) is happy.
+        url: safeHref(r.url) ?? "",
+        published: pub(r.published),
+      };
+    })
+    .filter((r) => r.title.length > 0)
+    .slice(0, 200);
+}
+
 function cleanContacts(v: unknown): ContactRow[] {
   if (!Array.isArray(v)) return [];
   return v
@@ -504,6 +529,16 @@ function mergeContent(d: SiteContent, s: Partial<SiteContent>): SiteContent {
           published: pub(s.capstone.published),
         }
       : d.capstone,
+    recommendedReadings: s.recommendedReadings
+      ? {
+          intro: has(s.recommendedReadings.intro)
+            ? clampStr(s.recommendedReadings.intro, 4000).trim()
+            : d.recommendedReadings.intro,
+          rows: Array.isArray(s.recommendedReadings.rows)
+            ? cleanReadings(s.recommendedReadings.rows)
+            : d.recommendedReadings.rows,
+        }
+      : d.recommendedReadings,
     contacts: s.contacts
       ? {
           rows: Array.isArray(s.contacts.rows)
@@ -651,6 +686,11 @@ export async function saveContent(patch: Partial<SiteContent>): Promise<SiteCont
       slideFlow: cleanStrList(patch.capstone?.slideFlow, 30, 300),
       guideLink: cleanLink(patch.capstone?.guideLink ?? {}),
       published: pub(patch.capstone?.published),
+    };
+  if ("recommendedReadings" in patch)
+    clean.recommendedReadings = {
+      intro: clampStr(patch.recommendedReadings?.intro, 4000).trim(),
+      rows: cleanReadings(patch.recommendedReadings?.rows),
     };
   if ("contacts" in patch)
     clean.contacts = {

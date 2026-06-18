@@ -46,6 +46,7 @@ export default async function Home() {
     activities,
     assignments,
     capstone,
+    recommendedReadings,
     contacts,
     citi,
   } = content;
@@ -53,6 +54,9 @@ export default async function Home() {
   // Only show items the admin has left published (default is shown).
   const quickLinks = content.quickLinks.filter((l) => l.published !== false);
   const schedule = presentations.schedule.filter((s) => s.published !== false);
+  const publishedReadings = recommendedReadings.rows.filter(
+    (r) => r.published !== false,
+  );
   const mentorRows = mentors.rows.filter((m) => m.published !== false);
   const activityRows = activities.rows.filter((a) => a.published !== false);
   const assignmentRows = assignments.rows
@@ -329,6 +333,41 @@ export default async function Home() {
         <div className="mt-5">
           <ActionLink link={capstone.guideLink} />
         </div>
+      </Section>
+    ),
+    readings: (
+      <Section
+        id="readings"
+        title="Recommended Readings"
+        intro={recommendedReadings.intro}
+      >
+        {publishedReadings.length ? (
+          <ul className="space-y-2">
+            {publishedReadings.map((r, i) => (
+              <li key={i} className="flex gap-2 text-neutral-700">
+                <span aria-hidden="true" className="text-cardinal">
+                  →
+                </span>
+                {r.url ? (
+                  <a
+                    href={r.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-cardinal underline hover:text-cardinal-dark"
+                  >
+                    {r.title}
+                  </a>
+                ) : (
+                  <span>{r.title}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-neutral-500">
+            Recommended readings will be posted here soon.
+          </p>
+        )}
       </Section>
     ),
     contacts: (

@@ -17,6 +17,7 @@ export const SECTION_KEYS = [
   "activities",
   "submit",
   "capstone",
+  "readings",
   "contacts",
 ] as const;
 
@@ -33,6 +34,7 @@ export const SECTION_LABELS: Record<SectionKey, string> = {
   activities: "Self-Directed Activities",
   submit: "Submit Assignments",
   capstone: "Capstone Project",
+  readings: "Recommended Readings",
   contacts: "Contacts & Addresses",
 };
 
@@ -50,6 +52,7 @@ export const SECTION_NAV_LABELS: Partial<Record<SectionKey, string>> = {
   activities: "Self-Directed Activity",
   submit: "Submit Assignments",
   capstone: "Capstone Project",
+  readings: "Recommended Readings",
   contacts: "Important Contacts",
 };
 
@@ -81,8 +84,23 @@ export function normalizeSections(v: unknown): SectionConfig[] {
       }
     }
   }
-  for (const key of SECTION_KEYS) {
-    if (!seen.has(key)) out.push({ key, published: true });
+  // Insert any keys missing from the stored layout at their canonical position
+  // (right after the nearest preceding registry key that is present), so a newly
+  // added section lands where this file puts it — e.g. between Capstone and
+  // Contacts — instead of always at the very end of a previously-saved layout.
+  for (let i = 0; i < SECTION_KEYS.length; i++) {
+    const key = SECTION_KEYS[i];
+    if (seen.has(key)) continue;
+    seen.add(key);
+    let insertAt = out.length;
+    for (let j = i - 1; j >= 0; j--) {
+      const idx = out.findIndex((c) => c.key === SECTION_KEYS[j]);
+      if (idx >= 0) {
+        insertAt = idx + 1;
+        break;
+      }
+    }
+    out.splice(insertAt, 0, { key, published: true });
   }
   return out;
 }

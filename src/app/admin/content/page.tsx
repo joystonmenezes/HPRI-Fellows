@@ -15,6 +15,7 @@ import {
   ActivitiesEditor,
   AssignmentsEditor,
   CapstoneEditor,
+  RecommendedReadingsEditor,
   ContactsEditor,
   CitiEditor,
 } from "@/components/admin/ContentEditors";
@@ -82,6 +83,7 @@ export default async function AdminContentPage() {
               ["activities", "Activities"],
               ["assignments", "Assignments"],
               ["capstone", "Capstone"],
+              ["readings", "Readings"],
               ["contacts", "Contacts"],
             ].map(([id, label], i) => (
               <span key={id}>
@@ -140,6 +142,9 @@ export default async function AdminContentPage() {
         </section>
         <section id="edit-capstone" className="scroll-mt-4">
           <CapstoneEditor initial={c.capstone} />
+        </section>
+        <section id="edit-readings" className="scroll-mt-4">
+          <RecommendedReadingsEditor initial={c.recommendedReadings} />
         </section>
         <section id="edit-contacts" className="scroll-mt-4">
           <ContactsEditor initial={c.contacts} />

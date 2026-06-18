@@ -2199,6 +2199,138 @@ export function CapstoneEditor({
   );
 }
 
+// ── Recommended Readings ────────────────────────────────────────────────────
+
+type ReadingR = { title: string; url: string; published: boolean };
+
+export function RecommendedReadingsEditor({
+  initial,
+}: {
+  initial: {
+    intro: string;
+    rows: { title: string; url: string; published?: boolean }[];
+  };
+}) {
+  const [intro, setIntro] = useState(initial.intro);
+  const [rows, setRows] = useState<ReadingR[]>(
+    initial.rows.map((r) => ({
+      title: r.title,
+      url: r.url,
+      published: r.published !== false,
+    })),
+  );
+  const { status, error, setStatus, save } = useSaver();
+  const touch = () => setStatus("idle");
+  const setRow = (i: number, patch: Partial<ReadingR>) => {
+    setRows((rs) => rs.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
+    touch();
+  };
+  const drag = useDragReorder((from, to) => {
+    setRows((rs) => reorder(rs, from, to));
+    touch();
+  });
+
+  return (
+    <CollapsibleForm
+      onSubmit={(e) => {
+        e.preventDefault();
+        const clean = rows
+          .map((r) => ({
+            title: r.title.trim(),
+            url: r.url.trim(),
+            published: r.published,
+          }))
+          .filter((r) => r.title);
+        save({ recommendedReadings: { intro: intro.trim(), rows: clean } });
+      }}
+      id="readings"
+    >
+      <SectionHeading title="Recommended Readings" count={rows.length} />
+      <p className={sectionLead}>
+        A short list of recommended readings. Each one needs a title and a web
+        address (opens in a new tab). Drag a row by its handle to reorder; uncheck
+        “Published” to hide one without deleting it.
+      </p>
+      <div className="mt-4">
+        <label className={labelClass}>
+          Intro <span className="font-normal text-neutral-400">(optional)</span>
+        </label>
+        <textarea
+          rows={2}
+          className={inputClass}
+          value={intro}
+          onChange={(e) => {
+            setIntro(e.target.value);
+            touch();
+          }}
+        />
+      </div>
+      <div className="mt-4 space-y-3">
+        {rows.map((r, i) => (
+          <div
+            key={i}
+            {...drag.rowProps(i)}
+            className={`rounded-md border border-neutral-200 p-3 transition ${dragState(drag, i)}`}
+          >
+            <div className="flex items-center gap-2">
+              <DragHandle {...drag.handleProps(i)} />
+              <span className="text-xs font-semibold text-neutral-500">
+                Reading {i + 1}
+              </span>
+            </div>
+            <div className="mt-2 grid gap-2 sm:grid-cols-2">
+              <div>
+                <label className={labelClass}>Title</label>
+                <input
+                  className={inputClass}
+                  value={r.title}
+                  onChange={(e) => setRow(i, { title: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>Web address (URL)</label>
+                <input
+                  className={inputClass}
+                  value={r.url}
+                  placeholder="https://…"
+                  onChange={(e) => setRow(i, { url: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="mt-3 flex items-center justify-between">
+              <PublishToggle
+                checked={r.published}
+                onChange={(v) => setRow(i, { published: v })}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setRows((rs) => rs.filter((_, idx) => idx !== i));
+                  touch();
+                }}
+                className="rounded-md border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 transition hover:bg-red-50"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={() => {
+          setRows((rs) => [...rs, { title: "", url: "", published: true }]);
+          touch();
+        }}
+        className={`${btnGhost} mt-3`}
+      >
+        + Add reading
+      </button>
+      <SaveBar status={status} error={error} />
+    </CollapsibleForm>
+  );
+}
+
 // ── Contacts & addresses ────────────────────────────────────────────────────
 
 type ContactR = {
