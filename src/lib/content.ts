@@ -337,10 +337,13 @@ function cleanActivities(v: unknown): ActivityRow[] {
   return v
     .map((x) => {
       const r = x as Partial<ActivityRow>;
+      const detailsHref = safeHref(r.detailsHref);
       return {
         activity: clampStr(r.activity, 200).trim(),
         deliverable: clampStr(r.deliverable, 600).trim(),
         published: pub(r.published),
+        // Only include when set — Firestore rejects `undefined` field values.
+        ...(detailsHref ? { detailsHref } : {}),
       };
     })
     .filter((r) => r.activity || r.deliverable)

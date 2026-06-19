@@ -1726,14 +1726,24 @@ export function MentorsEditor({
 
 // ── Activities ──────────────────────────────────────────────────────────────
 
-type ActivityR = { activity: string; deliverable: string; published: boolean };
+type ActivityR = {
+  activity: string;
+  deliverable: string;
+  published: boolean;
+  detailsHref: string;
+};
 
 export function ActivitiesEditor({
   initial,
 }: {
   initial: {
     intro: string;
-    rows: { activity: string; deliverable: string; published?: boolean }[];
+    rows: {
+      activity: string;
+      deliverable: string;
+      published?: boolean;
+      detailsHref?: string;
+    }[];
     link: { label: string; href?: string };
     trackerLink: { label: string; href?: string };
   };
@@ -1744,6 +1754,7 @@ export function ActivitiesEditor({
       activity: r.activity,
       deliverable: r.deliverable,
       published: r.published !== false,
+      detailsHref: r.detailsHref ?? "",
     })),
   );
   const [linkRow, setLinkRow] = useState<LinkRow>(toRow(initial.link));
@@ -1768,6 +1779,7 @@ export function ActivitiesEditor({
             activity: r.activity.trim(),
             deliverable: r.deliverable.trim(),
             published: r.published,
+            detailsHref: r.detailsHref.trim(),
           }))
           .filter((r) => r.activity || r.deliverable);
         save({
@@ -1783,7 +1795,8 @@ export function ActivitiesEditor({
     >
       <SectionHeading title="Self-directed activities" count={rows.length} />
       <p className={sectionLead}>
-        The activity / deliverable options table and its two links.
+        The activity / summary options table and its two links. Add an optional
+        “More Details” link to show a button next to that activity.
       </p>
       <div className="mt-4">
         <label className={labelClass}>Intro</label>
@@ -1823,6 +1836,18 @@ export function ActivitiesEditor({
                 />
               </div>
             </div>
+            <div className="mt-3">
+              <label className={labelClass}>
+                “More Details” link{" "}
+                <span className="font-normal text-neutral-400">(optional)</span>
+              </label>
+              <input
+                className={inputClass}
+                value={r.detailsHref}
+                placeholder="https://docs.google.com/… (opens in a new tab)"
+                onChange={(e) => setRow(i, { detailsHref: e.target.value })}
+              />
+            </div>
             <div className="mt-3 flex items-center justify-between">
               <PublishToggle
                 checked={r.published}
@@ -1845,7 +1870,10 @@ export function ActivitiesEditor({
       <button
         type="button"
         onClick={() => {
-          setRows((rs) => [...rs, { activity: "", deliverable: "", published: true }]);
+          setRows((rs) => [
+            ...rs,
+            { activity: "", deliverable: "", published: true, detailsHref: "" },
+          ]);
           touch();
         }}
         className={`${btnGhost} mt-3`}

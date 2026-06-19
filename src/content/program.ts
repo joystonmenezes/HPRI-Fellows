@@ -28,6 +28,9 @@ export type ActivityRow = {
   activity: string;
   deliverable: string;
   published?: boolean;
+  // Optional "More Details" link (e.g. a Google Doc), shown as a button next to
+  // the activity on the public page and opened in a new tab.
+  detailsHref?: string;
 };
 
 export type AssignmentRow = {

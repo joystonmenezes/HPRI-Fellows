@@ -287,6 +287,9 @@ export default async function Home() {
                 <th scope="col" className={tableTh}>
                   Summary
                 </th>
+                <th scope="col" className={tableTh}>
+                  Details
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -296,6 +299,20 @@ export default async function Home() {
                     {a.activity}
                   </td>
                   <td className={tableTd}>{a.deliverable}</td>
+                  <td className={tableTd}>
+                    {a.detailsHref ? (
+                      <a
+                        href={a.detailsHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center whitespace-nowrap rounded border border-cardinal px-3 py-1.5 text-xs font-semibold text-cardinal transition hover:bg-cardinal/5"
+                      >
+                        More Details ↗
+                      </a>
+                    ) : (
+                      <span className="text-neutral-400">—</span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
