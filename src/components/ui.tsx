@@ -57,7 +57,7 @@ export function ActionLink({
   variant?: "solid" | "outline";
 }) {
   const base =
-    "inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-semibold transition";
+    "inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-center text-sm font-semibold transition";
   if (link.href) {
     const styles =
       variant === "solid"

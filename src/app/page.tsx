@@ -107,7 +107,7 @@ export default async function Home() {
         title="Fellowship Documents"
         intro="External references and key program links. Items marked “soon” are activated as documents and links are uploaded."
       >
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="flex flex-wrap justify-center gap-3">
           {quickLinks.map((l) => (
             <ActionLink key={l.label} link={l} variant="outline" />
           ))}
