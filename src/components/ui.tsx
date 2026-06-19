@@ -52,9 +52,11 @@ function linkTargetProps(href: string): { target?: string; rel?: string } {
 export function ActionLink({
   link,
   variant = "solid",
+  className = "",
 }: {
   link: Link;
   variant?: "solid" | "outline";
+  className?: string;
 }) {
   const base =
     "inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-center text-sm font-semibold transition";
@@ -66,7 +68,7 @@ export function ActionLink({
     return (
       <a
         href={link.href}
-        className={`${base} ${styles}`}
+        className={`${base} ${styles} ${className}`}
         {...linkTargetProps(link.href)}
       >
         {link.label}
@@ -77,7 +79,7 @@ export function ActionLink({
     <span
       aria-disabled="true"
       title="Link coming soon"
-      className={`${base} cursor-not-allowed border border-dashed border-neutral-300 bg-neutral-50 text-neutral-400`}
+      className={`${base} ${className} cursor-not-allowed border border-dashed border-neutral-300 bg-neutral-50 text-neutral-400`}
     >
       {link.label}
       <span className="text-[10px] font-bold uppercase tracking-wide">soon</span>

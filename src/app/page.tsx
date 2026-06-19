@@ -109,7 +109,12 @@ export default async function Home() {
       >
         <div className="flex flex-wrap justify-center gap-3">
           {quickLinks.map((l) => (
-            <ActionLink key={l.label} link={l} variant="outline" />
+            <ActionLink
+              key={l.label}
+              link={l}
+              variant="outline"
+              className="w-full sm:w-[calc(50%_-_0.375rem)] lg:w-[calc(33.333%_-_0.5rem)]"
+            />
           ))}
         </div>
       </Section>
