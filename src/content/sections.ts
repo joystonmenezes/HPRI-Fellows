@@ -40,10 +40,10 @@ export const SECTION_LABELS: Record<SectionKey, string> = {
 
 // The subset of sections that also appear in the floating page nav, with the
 // label used there. Order in the nav follows the admin-chosen page layout, so
-// these labels just rename each section. `materials` (Fellowship Documents) is
-// intentionally omitted so it stays out of the nav. News and Contact Us are
-// added as bookends in page.tsx (they aren't reorderable layout sections).
+// these labels just rename each section. News and Contact Us are added as
+// bookends in page.tsx (they aren't reorderable layout sections).
 export const SECTION_NAV_LABELS: Partial<Record<SectionKey, string>> = {
+  materials: "Fellowship Documents",
   glance: "Program at a Glance",
   presentations: "Presentations",
   citi: "CITI Training",
