@@ -74,6 +74,7 @@ export type SiteContent = {
     intro: string;
     slideFlow: string[];
     guideLink: Link;
+    slideLink: Link;
     published: boolean;
   };
   // Recommended Readings: a short list of title + URL links.
@@ -135,13 +136,13 @@ export function defaultContent(): SiteContent {
     mentors: {
       intro: program.mentors.intro,
       rows: program.mentors.rows.map((m) => ({ ...m, published: true })),
-      link: link(program.mentors.link),
+      link: { ...link(program.mentors.link), published: true },
     },
     activities: {
       intro: program.activities.intro,
       rows: program.activities.rows.map((a) => ({ ...a, published: true })),
-      link: link(program.activities.link),
-      trackerLink: link(program.activities.trackerLink),
+      link: { ...link(program.activities.link), published: true },
+      trackerLink: { ...link(program.activities.trackerLink), published: true },
     },
     assignments: {
       intro: program.assignments.intro,
@@ -159,7 +160,8 @@ export function defaultContent(): SiteContent {
     capstone: {
       intro: program.capstone.intro,
       slideFlow: [...program.capstone.slideFlow],
-      guideLink: link(program.capstone.guideLink),
+      guideLink: { ...link(program.capstone.guideLink), published: true },
+      slideLink: { label: "Slide template", published: true },
       published: true,
     },
     recommendedReadings: { intro: "", rows: [] },
@@ -202,6 +204,15 @@ function cleanLink(v: unknown): Link {
   const label = clampStr((v as { label?: unknown })?.label, 160).trim();
   const href = safeHref((v as { href?: unknown })?.href);
   return href ? { label, href } : { label };
+}
+
+// Like cleanLink but preserves the publish flag so section-level link buttons
+// can be individually hidden without removing them.
+function cleanPubLink(v: unknown): Link {
+  const label = clampStr((v as { label?: unknown })?.label, 160).trim();
+  const href = safeHref((v as { href?: unknown })?.href);
+  const published = pub((v as { published?: unknown })?.published);
+  return href ? { label, href, published } : { label, published };
 }
 
 function cleanLinks(v: unknown): Link[] {
@@ -490,7 +501,7 @@ function mergeContent(d: SiteContent, s: Partial<SiteContent>): SiteContent {
             ? clampStr(s.mentors.intro, 4000).trim()
             : d.mentors.intro,
           rows: Array.isArray(s.mentors.rows) ? cleanMentors(s.mentors.rows) : d.mentors.rows,
-          link: s.mentors.link ? cleanLink(s.mentors.link) : d.mentors.link,
+          link: s.mentors.link ? cleanPubLink(s.mentors.link) : d.mentors.link,
         }
       : d.mentors,
     activities: s.activities
@@ -501,9 +512,9 @@ function mergeContent(d: SiteContent, s: Partial<SiteContent>): SiteContent {
           rows: Array.isArray(s.activities.rows)
             ? cleanActivities(s.activities.rows)
             : d.activities.rows,
-          link: s.activities.link ? cleanLink(s.activities.link) : d.activities.link,
+          link: s.activities.link ? cleanPubLink(s.activities.link) : d.activities.link,
           trackerLink: s.activities.trackerLink
-            ? cleanLink(s.activities.trackerLink)
+            ? cleanPubLink(s.activities.trackerLink)
             : d.activities.trackerLink,
         }
       : d.activities,
@@ -527,8 +538,11 @@ function mergeContent(d: SiteContent, s: Partial<SiteContent>): SiteContent {
             ? cleanStrList(s.capstone.slideFlow, 30, 300)
             : d.capstone.slideFlow,
           guideLink: s.capstone.guideLink
-            ? cleanLink(s.capstone.guideLink)
+            ? cleanPubLink(s.capstone.guideLink)
             : d.capstone.guideLink,
+          slideLink: s.capstone.slideLink
+            ? cleanPubLink(s.capstone.slideLink)
+            : d.capstone.slideLink,
           published: pub(s.capstone.published),
         }
       : d.capstone,
@@ -668,14 +682,14 @@ export async function saveContent(patch: Partial<SiteContent>): Promise<SiteCont
     clean.mentors = {
       intro: clampStr(patch.mentors?.intro, 4000).trim(),
       rows: cleanMentors(patch.mentors?.rows),
-      link: cleanLink(patch.mentors?.link ?? {}),
+      link: cleanPubLink(patch.mentors?.link ?? {}),
     };
   if ("activities" in patch)
     clean.activities = {
       intro: clampStr(patch.activities?.intro, 4000).trim(),
       rows: cleanActivities(patch.activities?.rows),
-      link: cleanLink(patch.activities?.link ?? {}),
-      trackerLink: cleanLink(patch.activities?.trackerLink ?? {}),
+      link: cleanPubLink(patch.activities?.link ?? {}),
+      trackerLink: cleanPubLink(patch.activities?.trackerLink ?? {}),
     };
   if ("assignments" in patch)
     clean.assignments = {
@@ -687,7 +701,8 @@ export async function saveContent(patch: Partial<SiteContent>): Promise<SiteCont
     clean.capstone = {
       intro: clampStr(patch.capstone?.intro, 4000).trim(),
       slideFlow: cleanStrList(patch.capstone?.slideFlow, 30, 300),
-      guideLink: cleanLink(patch.capstone?.guideLink ?? {}),
+      guideLink: cleanPubLink(patch.capstone?.guideLink ?? {}),
+      slideLink: cleanPubLink(patch.capstone?.slideLink ?? {}),
       published: pub(patch.capstone?.published),
     };
   if ("recommendedReadings" in patch)

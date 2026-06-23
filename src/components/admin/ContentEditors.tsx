@@ -979,38 +979,49 @@ function ActivateToggle({
   );
 }
 
-// A single editable link (button text + optional web address).
+// A single editable link (button text + optional web address + optional publish toggle).
 function SingleLink({
   title,
   link,
   onChange,
+  published,
+  onPublishedChange,
 }: {
   title: string;
   link: LinkRow;
   onChange: (l: LinkRow) => void;
+  published?: boolean;
+  onPublishedChange?: (v: boolean) => void;
 }) {
   return (
-    <div className="grid gap-2 sm:grid-cols-2">
-      <div>
-        <label className={labelClass}>{title} — button text</label>
-        <input
-          className={inputClass}
-          value={link.label}
-          onChange={(e) => onChange({ ...link, label: e.target.value })}
-        />
+    <div>
+      <div className="grid gap-2 sm:grid-cols-2">
+        <div>
+          <label className={labelClass}>{title} — button text</label>
+          <input
+            className={inputClass}
+            value={link.label}
+            onChange={(e) => onChange({ ...link, label: e.target.value })}
+          />
+        </div>
+        <div>
+          <label className={labelClass}>
+            {title} — web address{" "}
+            <span className="font-normal text-neutral-400">(optional)</span>
+          </label>
+          <input
+            className={inputClass}
+            placeholder="https://…"
+            value={link.href}
+            onChange={(e) => onChange({ ...link, href: e.target.value })}
+          />
+        </div>
       </div>
-      <div>
-        <label className={labelClass}>
-          {title} — web address{" "}
-          <span className="font-normal text-neutral-400">(optional)</span>
-        </label>
-        <input
-          className={inputClass}
-          placeholder="https://…"
-          value={link.href}
-          onChange={(e) => onChange({ ...link, href: e.target.value })}
-        />
-      </div>
+      {onPublishedChange !== undefined && (
+        <div className="mt-2">
+          <PublishToggle checked={published ?? true} onChange={onPublishedChange} />
+        </div>
+      )}
     </div>
   );
 }
@@ -1576,7 +1587,7 @@ export function MentorsEditor({
       area: string;
       published?: boolean;
     }[];
-    link: { label: string; href?: string };
+    link: { label: string; href?: string; published?: boolean };
   };
 }) {
   const [intro, setIntro] = useState(initial.intro);
@@ -1590,6 +1601,7 @@ export function MentorsEditor({
     })),
   );
   const [linkRow, setLinkRow] = useState<LinkRow>(toRow(initial.link));
+  const [linkPub, setLinkPub] = useState(initial.link.published !== false);
   const { status, error, setStatus, save } = useSaver();
   const touch = () => setStatus("idle");
   const setRow = (i: number, patch: Partial<MentorR>) => {
@@ -1614,7 +1626,7 @@ export function MentorsEditor({
             published: r.published,
           }))
           .filter((r) => r.fellow || r.primary || r.secondary || r.area);
-        save({ mentors: { intro: intro.trim(), rows: clean, link: fromRow(linkRow) } });
+        save({ mentors: { intro: intro.trim(), rows: clean, link: { ...fromRow(linkRow), published: linkPub } } });
       }}
       id="mentors"
     >
@@ -1713,10 +1725,9 @@ export function MentorsEditor({
         <SingleLink
           title="Mentor list link"
           link={linkRow}
-          onChange={(l) => {
-            setLinkRow(l);
-            touch();
-          }}
+          onChange={(l) => { setLinkRow(l); touch(); }}
+          published={linkPub}
+          onPublishedChange={(v) => { setLinkPub(v); touch(); }}
         />
       </div>
       <SaveBar status={status} error={error} />
@@ -1744,8 +1755,8 @@ export function ActivitiesEditor({
       published?: boolean;
       detailsHref?: string;
     }[];
-    link: { label: string; href?: string };
-    trackerLink: { label: string; href?: string };
+    link: { label: string; href?: string; published?: boolean };
+    trackerLink: { label: string; href?: string; published?: boolean };
   };
 }) {
   const [intro, setIntro] = useState(initial.intro);
@@ -1758,7 +1769,9 @@ export function ActivitiesEditor({
     })),
   );
   const [linkRow, setLinkRow] = useState<LinkRow>(toRow(initial.link));
+  const [linkPub, setLinkPub] = useState(initial.link.published !== false);
   const [trackerRow, setTrackerRow] = useState<LinkRow>(toRow(initial.trackerLink));
+  const [trackerPub, setTrackerPub] = useState(initial.trackerLink.published !== false);
   const { status, error, setStatus, save } = useSaver();
   const touch = () => setStatus("idle");
   const setRow = (i: number, patch: Partial<ActivityR>) => {
@@ -1786,8 +1799,8 @@ export function ActivitiesEditor({
           activities: {
             intro: intro.trim(),
             rows: clean,
-            link: fromRow(linkRow),
-            trackerLink: fromRow(trackerRow),
+            link: { ...fromRow(linkRow), published: linkPub },
+            trackerLink: { ...fromRow(trackerRow), published: trackerPub },
           },
         });
       }}
@@ -1884,18 +1897,16 @@ export function ActivitiesEditor({
         <SingleLink
           title="Full activity list"
           link={linkRow}
-          onChange={(l) => {
-            setLinkRow(l);
-            touch();
-          }}
+          onChange={(l) => { setLinkRow(l); touch(); }}
+          published={linkPub}
+          onPublishedChange={(v) => { setLinkPub(v); touch(); }}
         />
         <SingleLink
           title="Planning tracker"
           link={trackerRow}
-          onChange={(l) => {
-            setTrackerRow(l);
-            touch();
-          }}
+          onChange={(l) => { setTrackerRow(l); touch(); }}
+          published={trackerPub}
+          onPublishedChange={(v) => { setTrackerPub(v); touch(); }}
         />
       </div>
       <SaveBar status={status} error={error} />
@@ -2161,13 +2172,17 @@ export function CapstoneEditor({
   initial: {
     intro: string;
     slideFlow: string[];
-    guideLink: { label: string; href?: string };
+    guideLink: { label: string; href?: string; published?: boolean };
+    slideLink: { label: string; href?: string; published?: boolean };
     published?: boolean;
   };
 }) {
   const [intro, setIntro] = useState(initial.intro);
   const [slideFlow, setSlideFlow] = useState<string[]>([...initial.slideFlow]);
   const [linkRow, setLinkRow] = useState<LinkRow>(toRow(initial.guideLink));
+  const [guidePub, setGuidePub] = useState(initial.guideLink.published !== false);
+  const [slideRow, setSlideRow] = useState<LinkRow>(toRow(initial.slideLink));
+  const [slidePub, setSlidePub] = useState(initial.slideLink.published !== false);
   const { status, error, setStatus, save } = useSaver();
   const touch = () => setStatus("idle");
 
@@ -2179,7 +2194,8 @@ export function CapstoneEditor({
           capstone: {
             intro: intro.trim(),
             slideFlow: slideFlow.map((s) => s.trim()).filter(Boolean),
-            guideLink: fromRow(linkRow),
+            guideLink: { ...fromRow(linkRow), published: guidePub },
+            slideLink: { ...fromRow(slideRow), published: slidePub },
             // Capstone visibility is now controlled from the Page layout card.
             published: true,
           },
@@ -2190,7 +2206,8 @@ export function CapstoneEditor({
       <SectionHeading title="Capstone" count={slideFlow.length} />
       <p className={sectionLead}>
         The intro paragraph, the numbered recommended slide flow, and the guide
-        link. Use the Page layout card at the top to show or hide this section.
+        and slide template links. Use the Page layout card at the top to show or
+        hide this section.
       </p>
       <div className="mt-4">
         <label className={labelClass}>Intro</label>
@@ -2218,14 +2235,20 @@ export function CapstoneEditor({
           />
         </div>
       </div>
-      <div className="mt-4">
+      <div className="mt-4 space-y-3">
         <SingleLink
           title="Capstone guide link"
           link={linkRow}
-          onChange={(l) => {
-            setLinkRow(l);
-            touch();
-          }}
+          onChange={(l) => { setLinkRow(l); touch(); }}
+          published={guidePub}
+          onPublishedChange={(v) => { setGuidePub(v); touch(); }}
+        />
+        <SingleLink
+          title="Slide template link"
+          link={slideRow}
+          onChange={(l) => { setSlideRow(l); touch(); }}
+          published={slidePub}
+          onPublishedChange={(v) => { setSlidePub(v); touch(); }}
         />
       </div>
       <SaveBar status={status} error={error} />

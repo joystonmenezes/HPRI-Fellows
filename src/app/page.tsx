@@ -270,9 +270,11 @@ export default async function Home() {
             </tbody>
           </table>
         </div>
-        <div className="mt-5">
-          <ActionLink link={mentors.link} variant="outline" />
-        </div>
+        {mentors.link.published !== false && (
+          <div className="mt-5">
+            <ActionLink link={mentors.link} variant="outline" />
+          </div>
+        )}
       </Section>
     ),
     activities: (
@@ -324,8 +326,12 @@ export default async function Home() {
           </table>
         </div>
         <div className="mt-5 flex flex-wrap gap-3">
-          <ActionLink link={activities.link} variant="outline" />
-          <ActionLink link={activities.trackerLink} variant="outline" />
+          {activities.link.published !== false && (
+            <ActionLink link={activities.link} variant="outline" />
+          )}
+          {activities.trackerLink.published !== false && (
+            <ActionLink link={activities.trackerLink} variant="outline" />
+          )}
         </div>
       </Section>
     ),
@@ -352,8 +358,13 @@ export default async function Home() {
             </li>
           ))}
         </ol>
-        <div className="mt-5">
-          <ActionLink link={capstone.guideLink} />
+        <div className="mt-5 flex flex-wrap gap-3">
+          {capstone.guideLink.published !== false && (
+            <ActionLink link={capstone.guideLink} />
+          )}
+          {capstone.slideLink.published !== false && (
+            <ActionLink link={capstone.slideLink} />
+          )}
         </div>
       </Section>
     ),
