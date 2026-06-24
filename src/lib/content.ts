@@ -57,7 +57,11 @@ export type SiteContent = {
   // Presentations
   presentations: { intro: string; missedNote: string; schedule: ScheduleRow[] };
   // Rules
-  rules: { intro: string; expectations: string[]; agreementLink: Link };
+  rules: {
+    intro: string;
+    groups: { title: string; items: string[] }[];
+    agreementLink: Link;
+  };
   // Mentors
   mentors: { intro: string; rows: MentorRow[]; link: Link };
   // Activities
@@ -130,7 +134,7 @@ export function defaultContent(): SiteContent {
     },
     rules: {
       intro: program.rules.intro,
-      expectations: [...program.rules.expectations],
+      groups: program.rules.groups.map((g) => ({ title: g.title, items: [...g.items] })),
       agreementLink: link(program.rules.agreementLink),
     },
     mentors: {
@@ -274,6 +278,17 @@ function cleanStrList(v: unknown, max: number, itemMax: number): string[] {
     .map((x) => clampStr(x, itemMax).trim())
     .filter((s) => s.length > 0)
     .slice(0, max);
+}
+
+function cleanRuleGroups(v: unknown): { title: string; items: string[] }[] {
+  if (!Array.isArray(v)) return [];
+  return v
+    .map((x) => ({
+      title: clampStr((x as { title?: unknown })?.title, 200).trim(),
+      items: cleanStrList((x as { items?: unknown })?.items, 50, 600),
+    }))
+    .filter((g) => g.title || g.items.length)
+    .slice(0, 20);
 }
 
 function cleanAnnouncements(v: unknown): Announcement[] {
@@ -487,9 +502,12 @@ function mergeContent(d: SiteContent, s: Partial<SiteContent>): SiteContent {
     rules: s.rules
       ? {
           intro: has(s.rules.intro) ? clampStr(s.rules.intro, 4000).trim() : d.rules.intro,
-          expectations: Array.isArray(s.rules.expectations)
-            ? cleanStrList(s.rules.expectations, 50, 600)
-            : d.rules.expectations,
+          // Accept new grouped format; fall back to migrating the old flat array.
+          groups: Array.isArray(s.rules.groups)
+            ? cleanRuleGroups(s.rules.groups)
+            : Array.isArray((s.rules as { expectations?: unknown }).expectations)
+              ? [{ title: "Key expectations", items: cleanStrList((s.rules as { expectations?: unknown }).expectations, 50, 600) }]
+              : d.rules.groups,
           agreementLink: s.rules.agreementLink
             ? cleanLink(s.rules.agreementLink)
             : d.rules.agreementLink,
@@ -675,7 +693,7 @@ export async function saveContent(patch: Partial<SiteContent>): Promise<SiteCont
   if ("rules" in patch)
     clean.rules = {
       intro: clampStr(patch.rules?.intro, 4000).trim(),
-      expectations: cleanStrList(patch.rules?.expectations, 50, 600),
+      groups: Array.isArray(patch.rules?.groups) ? cleanRuleGroups(patch.rules.groups) : [],
       agreementLink: cleanLink(patch.rules?.agreementLink ?? {}),
     };
   if ("mentors" in patch)

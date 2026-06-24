@@ -220,18 +220,24 @@ export default async function Home() {
     ),
     rules: (
       <Section id="rules" title="Rules and Expectations" intro={rules.intro}>
-        <h3 className="font-semibold text-neutral-900">Key expectations</h3>
-        <ul className="mt-3 space-y-2">
-          {rules.expectations.map((e, i) => (
-            <li key={i} className="flex gap-2 text-neutral-700">
-              <span
-                aria-hidden="true"
-                className="mt-2 h-2 w-2 shrink-0 rounded-full bg-gold"
-              />
-              <span>{e}</span>
-            </li>
+        <div className="space-y-6">
+          {rules.groups.map((g, gi) => (
+            <div key={gi}>
+              <h3 className="font-semibold text-neutral-900">{g.title}</h3>
+              <ul className="mt-3 space-y-2">
+                {g.items.map((e, i) => (
+                  <li key={i} className="flex gap-2 text-neutral-700">
+                    <span
+                      aria-hidden="true"
+                      className="mt-2 h-2 w-2 shrink-0 rounded-full bg-gold"
+                    />
+                    <span>{e}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ))}
-        </ul>
+        </div>
         <div className="mt-5">
           <ActionLink link={rules.agreementLink} />
         </div>

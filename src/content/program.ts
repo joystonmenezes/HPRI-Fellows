@@ -284,13 +284,18 @@ export const program = {
   rules: {
     intro:
       "Fellows are expected to participate fully, communicate professionally, complete work on time, and use respectful, person-centered language when discussing homelessness and people experiencing homelessness. Fellows must protect confidentiality and may not share private, identifiable, or sensitive information without explicit approval.",
-    expectations: [
-      "Attend required sessions, seminars, mentor meetings, project check-ins, and capstone-related activities",
-      "Complete all assignments, reflections, project deliverables, and make-up work",
-      "Submit assignments by the posted deadline to the shared Fellows folder or approved submission location",
-      "Cite sources when using facts, statistics, quotes, public data, policy documents, news articles, websites, or research",
-      "Do not photograph, record, interview, approach, or collect personal information from people experiencing homelessness unless explicitly approved and supervised",
-      "Remain in approved program spaces during in-person activities and communicate with staff if leaving or returning during lunch or independent work periods",
+    groups: [
+      {
+        title: "Key expectations",
+        items: [
+          "Attend required sessions, seminars, mentor meetings, project check-ins, and capstone-related activities",
+          "Complete all assignments, reflections, project deliverables, and make-up work",
+          "Submit assignments by the posted deadline to the shared Fellows folder or approved submission location",
+          "Cite sources when using facts, statistics, quotes, public data, policy documents, news articles, websites, or research",
+          "Do not photograph, record, interview, approach, or collect personal information from people experiencing homelessness unless explicitly approved and supervised",
+          "Remain in approved program spaces during in-person activities and communicate with staff if leaving or returning during lunch or independent work periods",
+        ],
+      },
     ],
     agreementLink: { label: "Full rules and participation agreement" } as Link,
   },

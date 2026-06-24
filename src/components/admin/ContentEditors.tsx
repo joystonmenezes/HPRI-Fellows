@@ -1488,22 +1488,31 @@ export function PresentationsEditor({
 
 // ── Rules ───────────────────────────────────────────────────────────────────
 
+type RuleGroup = { title: string; items: string[] };
+
 export function RulesEditor({
   initial,
 }: {
   initial: {
     intro: string;
-    expectations: string[];
+    groups: { title: string; items: string[] }[];
     agreementLink: { label: string; href?: string };
   };
 }) {
   const [intro, setIntro] = useState(initial.intro);
-  const [expectations, setExpectations] = useState<string[]>([
-    ...initial.expectations,
-  ]);
+  const [groups, setGroups] = useState<RuleGroup[]>(
+    initial.groups.map((g) => ({ title: g.title, items: [...g.items] })),
+  );
   const [linkRow, setLinkRow] = useState<LinkRow>(toRow(initial.agreementLink));
   const { status, error, setStatus, save } = useSaver();
   const touch = () => setStatus("idle");
+
+  function updateGroup(gi: number, patch: Partial<RuleGroup>) {
+    setGroups((gs) => gs.map((g, idx) => (idx === gi ? { ...g, ...patch } : g)));
+    touch();
+  }
+
+  const totalItems = groups.reduce((n, g) => n + g.items.length, 0);
 
   return (
     <CollapsibleForm
@@ -1512,17 +1521,22 @@ export function RulesEditor({
         save({
           rules: {
             intro: intro.trim(),
-            expectations: expectations.map((s) => s.trim()).filter(Boolean),
+            groups: groups
+              .map((g) => ({
+                title: g.title.trim(),
+                items: g.items.map((s) => s.trim()).filter(Boolean),
+              }))
+              .filter((g) => g.title || g.items.length),
             agreementLink: fromRow(linkRow),
           },
         });
       }}
       id="rules"
     >
-      <SectionHeading title="Rules & expectations" count={expectations.length} />
+      <SectionHeading title="Rules & expectations" count={totalItems} />
       <p className={sectionLead}>
-        The intro paragraph, the bulleted key-expectations list, and the
-        participation-agreement link.
+        The intro, editable expectation groups (rename or add groups like
+        "Discussion Norms"), and the participation-agreement link.
       </p>
       <div className="mt-4">
         <label className={labelClass}>Intro</label>
@@ -1530,34 +1544,62 @@ export function RulesEditor({
           rows={3}
           className={inputClass}
           value={intro}
-          onChange={(e) => {
-            setIntro(e.target.value);
-            touch();
-          }}
+          onChange={(e) => { setIntro(e.target.value); touch(); }}
         />
       </div>
-      <div className="mt-4">
-        <label className={labelClass}>Key expectations</label>
-        <div className="mt-1">
-          <StringList
-            items={expectations}
-            onChange={(items) => {
-              setExpectations(items);
-              touch();
-            }}
-            addLabel="+ Add expectation"
-            placeholder="Expectation…"
-          />
-        </div>
+      <div className="mt-5 space-y-4">
+        {groups.map((g, gi) => (
+          <div key={gi} className="rounded-md border border-neutral-200 p-4">
+            <div className="flex items-start gap-3">
+              <div className="grow">
+                <label className={labelClass}>Group title</label>
+                <input
+                  className={inputClass}
+                  value={g.title}
+                  placeholder="e.g. Key expectations, Discussion Norms…"
+                  onChange={(e) => updateGroup(gi, { title: e.target.value })}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setGroups((gs) => gs.filter((_, idx) => idx !== gi));
+                  touch();
+                }}
+                className="mt-6 shrink-0 rounded-md border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 transition hover:bg-red-50"
+              >
+                Remove group
+              </button>
+            </div>
+            <div className="mt-3">
+              <label className={labelClass}>Items</label>
+              <div className="mt-1">
+                <StringList
+                  items={g.items}
+                  onChange={(items) => updateGroup(gi, { items })}
+                  addLabel="+ Add item"
+                  placeholder="Expectation…"
+                />
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
+      <button
+        type="button"
+        onClick={() => {
+          setGroups((gs) => [...gs, { title: "", items: [] }]);
+          touch();
+        }}
+        className={`${btnGhost} mt-3`}
+      >
+        + Add group
+      </button>
       <div className="mt-4">
         <SingleLink
           title="Agreement link"
           link={linkRow}
-          onChange={(l) => {
-            setLinkRow(l);
-            touch();
-          }}
+          onChange={(l) => { setLinkRow(l); touch(); }}
         />
       </div>
       <SaveBar status={status} error={error} />
