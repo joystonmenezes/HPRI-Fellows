@@ -780,7 +780,7 @@ export function QuickLinksEditor({
   );
 }
 
-type AnnRow = { title: string; date: string; body: string; published: boolean };
+type AnnRow = { title: string; date: string; body: string; published: boolean; href: string };
 
 export function AnnouncementsEditor({
   initial,
@@ -793,6 +793,7 @@ export function AnnouncementsEditor({
       date: a.date,
       body: a.body,
       published: a.published,
+      href: (a as { href?: string }).href ?? "",
     })),
   );
   const { status, error, setStatus, save } = useSaver();
@@ -810,7 +811,7 @@ export function AnnouncementsEditor({
     <CollapsibleForm
       onSubmit={(e) => {
         e.preventDefault();
-        save({ announcements: items });
+        save({ announcements: items.map((a) => ({ ...a, href: a.href.trim() || undefined })) });
       }}
       id="news"
     >
@@ -863,6 +864,18 @@ export function AnnouncementsEditor({
                 onChange={(e) => update(i, { body: e.target.value })}
               />
             </div>
+            <div className="mt-3">
+              <label className={labelClass}>
+                Link URL{" "}
+                <span className="font-normal text-neutral-400">(optional — shows a clickable "Read more" button)</span>
+              </label>
+              <input
+                className={inputClass}
+                value={a.href}
+                placeholder="https://…"
+                onChange={(e) => update(i, { href: e.target.value })}
+              />
+            </div>
             <div className="mt-3 flex items-center justify-between">
               <label className="flex items-center gap-2 text-sm font-medium text-neutral-700">
                 <input
@@ -895,6 +908,7 @@ export function AnnouncementsEditor({
               date: new Date().toISOString().slice(0, 10),
               body: "",
               published: true,
+              href: "",
             },
             ...it,
           ]);

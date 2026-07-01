@@ -52,7 +52,7 @@ export function SubmitAssignments({ rows }: { rows: Row[] }) {
   return (
     <>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[560px] border-collapse text-sm">
+        <table className="w-full min-w-[640px] border-collapse text-sm">
           <caption className="sr-only">Assignments and due dates</caption>
           <thead>
             <tr>
@@ -75,53 +75,53 @@ export function SubmitAssignments({ rows }: { rows: Row[] }) {
                 </td>
                 <td className={`${tableTd} whitespace-nowrap`}>{a.due}</td>
                 <td className={tableTd}>
-                  <div className="flex flex-col items-start gap-1.5">
+                  <div className="flex flex-wrap items-center gap-2">
                     {a.materialHref ? (
                       <a
                         href={a.materialHref}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center rounded border border-cardinal px-3 py-1.5 text-xs font-semibold text-cardinal transition hover:bg-cardinal/5"
+                        className="inline-flex items-center whitespace-nowrap rounded border border-cardinal px-3 py-1.5 text-xs font-semibold text-cardinal transition hover:bg-cardinal/5"
                       >
                         Assignment material ↗
                       </a>
                     ) : (
                       <span
                         title="No material posted yet"
-                        className="inline-flex cursor-not-allowed items-center rounded border border-neutral-200 bg-neutral-50 px-3 py-1.5 text-xs font-semibold text-neutral-400"
+                        className="inline-flex cursor-not-allowed items-center whitespace-nowrap rounded border border-neutral-200 bg-neutral-50 px-3 py-1.5 text-xs font-semibold text-neutral-400"
                       >
                         Assignment material
                       </span>
                     )}
                     {a.state === "open" ? (
-                      <div>
+                      <>
                         <button
                           type="button"
                           onClick={() => setOpen(a.assignment)}
-                          className="inline-flex items-center rounded bg-cardinal px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-cardinal-dark"
+                          className="inline-flex items-center whitespace-nowrap rounded bg-cardinal px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-cardinal-dark"
                         >
                           Submit here
                         </button>
                         {a.closesAt ? (
-                          <p className="mt-1 text-xs text-neutral-500">
+                          <span className="whitespace-nowrap text-xs text-neutral-500">
                             Open until {formatWallTime(a.closesAt)}
-                          </p>
+                          </span>
                         ) : null}
-                      </div>
+                      </>
                     ) : (
-                      <div>
+                      <>
                         <button
                           type="button"
                           disabled
                           title={windowHint(a) || "Submissions are not open"}
-                          className="inline-flex cursor-not-allowed items-center rounded bg-neutral-200 px-3 py-1.5 text-xs font-semibold text-neutral-500"
+                          className="inline-flex cursor-not-allowed items-center whitespace-nowrap rounded bg-neutral-200 px-3 py-1.5 text-xs font-semibold text-neutral-500"
                         >
                           {closedLabel[a.state]}
                         </button>
                         {windowHint(a) ? (
-                          <p className="mt-1 text-xs text-neutral-400">{windowHint(a)}</p>
+                          <span className="whitespace-nowrap text-xs text-neutral-400">{windowHint(a)}</span>
                         ) : null}
-                      </div>
+                      </>
                     )}
                   </div>
                 </td>
@@ -161,9 +161,10 @@ export function SubmitAssignments({ rows }: { rows: Row[] }) {
               Upload your assignment
             </h3>
             <p className="mt-1 text-sm text-neutral-600">
-              Submitting for <strong className="text-neutral-900">{open}</strong>
-              . PDF or Word, max 20&nbsp;MB. You and the program staff each get an
-              email confirmation. You can resubmit before the deadline.
+              Submitting for <strong className="text-neutral-900">{open}</strong>.
+              PDF, Word, or video (MP4/MOV/WEBM) — max 20&nbsp;MB for documents,
+              500&nbsp;MB for video. You and the program staff each get an email
+              confirmation. You can resubmit before the deadline.
             </p>
             <div className="mt-5">
               <AssignmentForm

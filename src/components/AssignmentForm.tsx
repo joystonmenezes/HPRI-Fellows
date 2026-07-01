@@ -108,14 +108,17 @@ export function AssignmentForm({
       </div>
       <div>
         <label htmlFor="a-file" className={labelClass}>
-          File <span className="font-normal text-neutral-400">(PDF or Word, max 20 MB)</span>
+          File{" "}
+          <span className="font-normal text-neutral-400">
+            (PDF, Word, or video — MP4/MOV/WEBM up to 500 MB)
+          </span>
         </label>
         <input
           id="a-file"
           name="file"
           type="file"
           required
-          accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          accept=".pdf,.doc,.docx,.mp4,.mov,.webm,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,video/mp4,video/quicktime,video/webm"
           className="mt-1 block w-full text-sm text-neutral-700 file:mr-3 file:rounded-md file:border-0 file:bg-cardinal file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-cardinal-dark"
         />
       </div>

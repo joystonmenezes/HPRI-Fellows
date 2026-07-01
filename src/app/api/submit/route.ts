@@ -9,13 +9,18 @@ import { sendMail, getAdminEmail, getAdminBcc } from "@/lib/email";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const MAX_BYTES = 20 * 1024 * 1024; // 20 MB
-const ALLOWED_EXT = [".pdf", ".doc", ".docx"];
+const MAX_DOC_BYTES = 20 * 1024 * 1024;   // 20 MB for documents
+const MAX_VIDEO_BYTES = 500 * 1024 * 1024; // 500 MB for video
+const DOC_EXTS = new Set([".pdf", ".doc", ".docx"]);
+const VIDEO_EXTS = new Set([".mp4", ".mov", ".webm"]);
+const ALLOWED_EXT = [".pdf", ".doc", ".docx", ".mp4", ".mov", ".webm"];
 const CONTENT_TYPE: Record<string, string> = {
   ".pdf": "application/pdf",
   ".doc": "application/msword",
-  ".docx":
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ".mp4": "video/mp4",
+  ".mov": "video/quicktime",
+  ".webm": "video/webm",
 };
 
 function isEmail(v: string) {
@@ -84,17 +89,18 @@ export async function POST(req: Request) {
         { status: 400 },
       );
     }
-    if (file.size > MAX_BYTES) {
-      return NextResponse.json(
-        { ok: false, error: "File is too large (maximum 20 MB)." },
-        { status: 400 },
-      );
-    }
-
     const ext = path.extname(file.name).toLowerCase();
     if (!ALLOWED_EXT.includes(ext)) {
       return NextResponse.json(
-        { ok: false, error: "Only PDF or Word files (.pdf, .doc, .docx) are allowed." },
+        { ok: false, error: "Only PDF, Word (.pdf, .doc, .docx) or video (.mp4, .mov, .webm) files are allowed." },
+        { status: 400 },
+      );
+    }
+    const isVideo = VIDEO_EXTS.has(ext);
+    const maxBytes = isVideo ? MAX_VIDEO_BYTES : MAX_DOC_BYTES;
+    if (file.size > maxBytes) {
+      return NextResponse.json(
+        { ok: false, error: isVideo ? "Video is too large (maximum 500 MB)." : "File is too large (maximum 20 MB)." },
         { status: 400 },
       );
     }
@@ -108,7 +114,7 @@ export async function POST(req: Request) {
     const bucket = getBucket();
     if (bucket) {
       await bucket.file(`uploads/${stored}`).save(bytes, {
-        resumable: false,
+        resumable: isVideo,
         contentType: CONTENT_TYPE[ext] || "application/octet-stream",
         metadata: { cacheControl: "private, no-store" },
       });
