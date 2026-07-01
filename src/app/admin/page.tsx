@@ -8,6 +8,7 @@ import {
 import { LogoutButton } from "@/components/admin/LogoutButton";
 import { DeleteSubmissionButton } from "@/components/admin/DeleteSubmissionButton";
 import { RestoreSubmissionButton } from "@/components/admin/RestoreSubmissionButton";
+import { SubmissionsList } from "@/components/admin/SubmissionsList";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -85,53 +86,19 @@ export default async function AdminDashboard() {
           {assignments.length === 0 ? (
             <p className="mt-3 text-sm text-neutral-500">No submissions yet.</p>
           ) : (
-            <div className="mt-3 overflow-x-auto">
-              <table className="w-full border-collapse text-sm">
-                <thead>
-                  <tr>
-                    <th className={th}>Received</th>
-                    <th className={th}>Name</th>
-                    <th className={th}>Email</th>
-                    <th className={th}>Assignment</th>
-                    <th className={th}>File</th>
-                    <th className={th}>Note</th>
-                    <th className={th}>
-                      <span className="sr-only">Actions</span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {assignments.map((s) => (
-                    <tr key={s.id}>
-                      <td className={`${td} whitespace-nowrap text-neutral-600`}>
-                        {fmtDate(s.createdAt)}
-                      </td>
-                      <td className={`${td} font-medium text-neutral-900`}>
-                        {s.name}
-                      </td>
-                      <td className={td}>
-                        <a
-                          href={`mailto:${s.email}`}
-                          className="text-cardinal underline"
-                        >
-                          {s.email}
-                        </a>
-                      </td>
-                      <td className={td}>{s.subject}</td>
-                      <td className={td}>{fileCell(s)}</td>
-                      <td className={`${td} max-w-xs text-neutral-700`}>
-                        {s.message || (
-                          <span className="text-neutral-400">—</span>
-                        )}
-                      </td>
-                      <td className={`${td} whitespace-nowrap`}>
-                        <DeleteSubmissionButton id={s.id} what="submission" />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <SubmissionsList
+              submissions={assignments.map((s) => ({
+                id: s.id,
+                name: s.name,
+                email: s.email,
+                subject: s.subject,
+                message: s.message,
+                fileName: s.fileName,
+                filePath: s.filePath,
+                fileSize: s.fileSize,
+                createdAt: s.createdAt,
+              }))}
+            />
           )}
         </section>
 
