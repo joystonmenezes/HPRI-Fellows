@@ -75,7 +75,7 @@ export function SubmitAssignments({ rows }: { rows: Row[] }) {
                 </td>
                 <td className={`${tableTd} whitespace-nowrap`}>{a.due}</td>
                 <td className={tableTd}>
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex flex-col items-start gap-2">
                     {a.materialHref ? (
                       <a
                         href={a.materialHref}
@@ -93,36 +93,38 @@ export function SubmitAssignments({ rows }: { rows: Row[] }) {
                         Assignment material
                       </span>
                     )}
-                    {a.state === "open" ? (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => setOpen(a.assignment)}
-                          className="inline-flex items-center whitespace-nowrap rounded bg-cardinal px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-cardinal-dark"
-                        >
-                          Submit here
-                        </button>
-                        {a.closesAt ? (
-                          <span className="whitespace-nowrap text-xs text-neutral-500">
-                            Open until {formatWallTime(a.closesAt)}
-                          </span>
-                        ) : null}
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          type="button"
-                          disabled
-                          title={windowHint(a) || "Submissions are not open"}
-                          className="inline-flex cursor-not-allowed items-center whitespace-nowrap rounded bg-neutral-200 px-3 py-1.5 text-xs font-semibold text-neutral-500"
-                        >
-                          {closedLabel[a.state]}
-                        </button>
-                        {windowHint(a) ? (
-                          <span className="whitespace-nowrap text-xs text-neutral-400">{windowHint(a)}</span>
-                        ) : null}
-                      </>
-                    )}
+                    <div className="flex flex-wrap items-center gap-2">
+                      {a.state === "open" ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => setOpen(a.assignment)}
+                            className="inline-flex items-center whitespace-nowrap rounded bg-cardinal px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-cardinal-dark"
+                          >
+                            Submit here
+                          </button>
+                          {a.closesAt ? (
+                            <span className="whitespace-nowrap text-xs text-neutral-500">
+                              Open until {formatWallTime(a.closesAt)}
+                            </span>
+                          ) : null}
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            disabled
+                            title={windowHint(a) || "Submissions are not open"}
+                            className="inline-flex cursor-not-allowed items-center whitespace-nowrap rounded bg-neutral-200 px-3 py-1.5 text-xs font-semibold text-neutral-500"
+                          >
+                            {closedLabel[a.state]}
+                          </button>
+                          {windowHint(a) ? (
+                            <span className="whitespace-nowrap text-xs text-neutral-400">{windowHint(a)}</span>
+                          ) : null}
+                        </>
+                      )}
+                    </div>
                   </div>
                 </td>
               </tr>

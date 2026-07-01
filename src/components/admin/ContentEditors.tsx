@@ -780,7 +780,7 @@ export function QuickLinksEditor({
   );
 }
 
-type AnnRow = { title: string; date: string; body: string; published: boolean; href: string };
+type AnnRow = { title: string; date: string; body: string; published: boolean; href: string; hrefLabel: string };
 
 export function AnnouncementsEditor({
   initial,
@@ -794,6 +794,7 @@ export function AnnouncementsEditor({
       body: a.body,
       published: a.published,
       href: (a as { href?: string }).href ?? "",
+      hrefLabel: (a as { hrefLabel?: string }).hrefLabel ?? "",
     })),
   );
   const { status, error, setStatus, save } = useSaver();
@@ -811,7 +812,13 @@ export function AnnouncementsEditor({
     <CollapsibleForm
       onSubmit={(e) => {
         e.preventDefault();
-        save({ announcements: items.map((a) => ({ ...a, href: a.href.trim() || undefined })) });
+        save({
+          announcements: items.map((a) => ({
+            ...a,
+            href: a.href.trim() || undefined,
+            hrefLabel: a.hrefLabel.trim() || undefined,
+          })),
+        });
       }}
       id="news"
     >
@@ -864,17 +871,31 @@ export function AnnouncementsEditor({
                 onChange={(e) => update(i, { body: e.target.value })}
               />
             </div>
-            <div className="mt-3">
-              <label className={labelClass}>
-                Link URL{" "}
-                <span className="font-normal text-neutral-400">(optional — shows a clickable "Read more" button)</span>
-              </label>
-              <input
-                className={inputClass}
-                value={a.href}
-                placeholder="https://…"
-                onChange={(e) => update(i, { href: e.target.value })}
-              />
+            <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_12rem]">
+              <div>
+                <label className={labelClass}>
+                  Link URL{" "}
+                  <span className="font-normal text-neutral-400">(optional)</span>
+                </label>
+                <input
+                  className={inputClass}
+                  value={a.href}
+                  placeholder="https://…"
+                  onChange={(e) => update(i, { href: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>
+                  Link text{" "}
+                  <span className="font-normal text-neutral-400">(optional)</span>
+                </label>
+                <input
+                  className={inputClass}
+                  value={a.hrefLabel}
+                  placeholder="Read more"
+                  onChange={(e) => update(i, { hrefLabel: e.target.value })}
+                />
+              </div>
             </div>
             <div className="mt-3 flex items-center justify-between">
               <label className="flex items-center gap-2 text-sm font-medium text-neutral-700">
@@ -909,6 +930,7 @@ export function AnnouncementsEditor({
               body: "",
               published: true,
               href: "",
+              hrefLabel: "",
             },
             ...it,
           ]);

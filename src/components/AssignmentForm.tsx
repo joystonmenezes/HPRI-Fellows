@@ -19,26 +19,42 @@ export function AssignmentForm({
 }) {
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState("");
+  const [progress, setProgress] = useState<number | null>(null);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget;
     setStatus("submitting");
+    setProgress(0);
     setError("");
     try {
-      const res = await fetch("/api/submit", {
-        method: "POST",
-        body: new FormData(form),
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.upload.addEventListener("progress", (ev) => {
+          if (ev.lengthComputable) setProgress(Math.round((ev.loaded / ev.total) * 100));
+        });
+        xhr.addEventListener("load", () => {
+          try {
+            const json = JSON.parse(xhr.responseText) as { ok: boolean; error?: string };
+            if (xhr.status >= 200 && xhr.status < 300 && json.ok) resolve();
+            else reject(new Error(json.error || "Could not submit your file."));
+          } catch {
+            reject(new Error("Could not submit your file."));
+          }
+        });
+        xhr.addEventListener("error", () =>
+          reject(new Error("Network error. Please try again.")),
+        );
+        xhr.open("POST", "/api/submit");
+        xhr.send(new FormData(form));
       });
-      const json = await res.json();
-      if (!res.ok || !json.ok) {
-        throw new Error(json.error || "Could not submit your file.");
-      }
       setStatus("success");
+      setProgress(null);
       form.reset();
       onSuccess?.();
     } catch (err) {
       setStatus("error");
+      setProgress(null);
       setError(err instanceof Error ? err.message : "Could not submit your file.");
     }
   }
@@ -128,6 +144,24 @@ export function AssignmentForm({
         </label>
         <textarea id="a-note" name="note" rows={3} className={inputClass} />
       </div>
+      {status === "submitting" && progress !== null ? (
+        <div>
+          <div className="mb-1 flex items-center justify-between text-xs text-neutral-600">
+            <span>Uploading…</span>
+            <span className="font-semibold">{progress}%</span>
+          </div>
+          <div className="h-2 w-full overflow-hidden rounded-full bg-neutral-200">
+            <div
+              className="h-full rounded-full bg-cardinal transition-all duration-200"
+              style={{ width: `${progress}%` }}
+              role="progressbar"
+              aria-valuenow={progress}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            />
+          </div>
+        </div>
+      ) : null}
       {status === "error" ? (
         <p role="alert" className="text-sm font-medium text-red-700">
           {error}

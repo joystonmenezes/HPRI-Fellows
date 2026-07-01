@@ -592,7 +592,7 @@ export default async function Home() {
                       rel="noopener noreferrer"
                       className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-cardinal underline underline-offset-2 hover:text-cardinal-dark"
                     >
-                      Read more ↗
+                      {a.hrefLabel || "Read more"} ↗
                     </a>
                   ) : null}
                 </li>

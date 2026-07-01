@@ -31,6 +31,7 @@ export type Announcement = {
   date: string;
   published: boolean;
   href?: string;
+  hrefLabel?: string;
 };
 
 export type GlanceRow = { label: string; value: string };
@@ -299,6 +300,7 @@ function cleanAnnouncements(v: unknown): Announcement[] {
     .map((x, i) => {
       const a = x as Partial<Announcement>;
       const href = safeHref(a?.href);
+      const hrefLabel = clampStr(a?.hrefLabel, 200).trim();
       return {
         id: i + 1,
         title: clampStr(a?.title, 160).trim(),
@@ -306,6 +308,7 @@ function cleanAnnouncements(v: unknown): Announcement[] {
         date: clampStr(a?.date, 40).trim(),
         published: Boolean(a?.published),
         ...(href ? { href } : {}),
+        ...(hrefLabel ? { hrefLabel } : {}),
       };
     })
     .filter((a) => a.title.length > 0 || a.body.length > 0);
