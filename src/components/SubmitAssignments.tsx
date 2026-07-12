@@ -164,9 +164,10 @@ export function SubmitAssignments({ rows }: { rows: Row[] }) {
             </h3>
             <p className="mt-1 text-sm text-neutral-600">
               Submitting for <strong className="text-neutral-900">{open}</strong>.
-              PDF, Word, or video (MP4/MOV/WEBM) — max 20&nbsp;MB for documents,
-              500&nbsp;MB for video. You and the program staff each get an email
-              confirmation. You can resubmit before the deadline.
+              PDF, Word, or video (MP4/MOV/WEBM) — up to 500&nbsp;MB. Larger
+              videos can be submitted as a shareable Google&nbsp;Drive link. You
+              and the program staff each get an email confirmation, and you can
+              resubmit before the deadline.
             </p>
             <div className="mt-5">
               <AssignmentForm

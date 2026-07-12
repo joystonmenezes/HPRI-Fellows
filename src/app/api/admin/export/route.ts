@@ -23,6 +23,7 @@ const COLUMNS: { key: string; label: string }[] = [
   { key: "message", label: "Message / Note" },
   { key: "fileName", label: "File name" },
   { key: "fileSize", label: "File size (bytes)" },
+  { key: "link", label: "Link" },
 ];
 
 export async function GET(req: Request) {

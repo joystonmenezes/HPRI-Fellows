@@ -21,6 +21,9 @@ export type Submission = {
   fileName?: string;
   filePath?: string;
   fileSize?: number;
+  // Set instead of the file fields when a fellow submits a shareable link
+  // (e.g. a Google Drive video) rather than uploading the file directly.
+  link?: string;
   createdAt: string;
   // Set to an ISO timestamp when the item is moved to "Recently Deleted".
   // Absent/null means active. Soft-deleting keeps the row and any uploaded file

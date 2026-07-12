@@ -11,8 +11,11 @@ import { sendMail, getAdminEmail, getAdminBcc } from "@/lib/email";
 //                          local/self-host without Firebase configured
 // Keeping the constants and helpers here means all three enforce the same rules.
 
-export const MAX_DOC_BYTES = 20 * 1024 * 1024; // 20 MB for documents
-export const MAX_VIDEO_BYTES = 500 * 1024 * 1024; // 500 MB for video
+// One 500 MB ceiling for every file type. Anything larger should be shared as a
+// Drive link instead (see /api/submit/link) — the browser catches oversize files
+// before uploading, and finalize re-checks the true size as a backstop.
+export const MAX_UPLOAD_BYTES = 500 * 1024 * 1024; // 500 MB
+export const MAX_UPLOAD_MB = 500;
 export const DOC_EXTS = new Set([".pdf", ".doc", ".docx"]);
 export const VIDEO_EXTS = new Set([".mp4", ".mov", ".webm"]);
 export const ALLOWED_EXT = [".pdf", ".doc", ".docx", ".mp4", ".mov", ".webm"];
@@ -29,6 +32,16 @@ export function isEmail(v: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 }
 
+// Accept only well-formed http(s) links for the "submit a shareable link" path.
+export function isHttpUrl(v: string): boolean {
+  try {
+    const u = new URL(v);
+    return u.protocol === "http:" || u.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 // Collapse a name/assignment into a filesystem- and URL-safe fragment.
 export function safeName(s: string): string {
   return s.replace(/[^a-z0-9._-]+/gi, "_").slice(0, 60) || "file";
@@ -38,14 +51,12 @@ export function extOf(fileName: string): string {
   return path.extname(fileName).toLowerCase();
 }
 
-export function limitFor(ext: string): number {
-  return VIDEO_EXTS.has(ext) ? MAX_VIDEO_BYTES : MAX_DOC_BYTES;
+export function limitFor(_ext?: string): number {
+  return MAX_UPLOAD_BYTES;
 }
 
-export function tooLargeMessage(ext: string): string {
-  return VIDEO_EXTS.has(ext)
-    ? "Video is too large (maximum 500 MB)."
-    : "File is too large (maximum 20 MB).";
+export function tooLargeMessage(_ext?: string): string {
+  return "That file is over the 500 MB limit. Upload it to your drive and submit a shareable link instead.";
 }
 
 // Build the stored object path (under uploads/) for a submission.
@@ -79,15 +90,18 @@ export function verifyPath(storedPath: string, token: string): boolean {
 }
 
 // Record the submission and send the two notification emails (admin + student).
+// A submission is either an uploaded file (fileName/filePath/fileSize) or a
+// shared link. Only defined keys are written, so Firestore never sees undefined.
 // Failures to email are logged but don't fail the submission.
 export async function recordAndNotify(input: {
   name: string;
   email: string;
   assignment: string;
   note: string;
-  fileName: string;
-  filePath: string;
-  fileSize: number;
+  fileName?: string;
+  filePath?: string;
+  fileSize?: number;
+  link?: string;
 }): Promise<void> {
   await addSubmission({
     kind: "assignment",
@@ -95,9 +109,10 @@ export async function recordAndNotify(input: {
     email: input.email,
     subject: input.assignment,
     message: input.note,
-    fileName: input.fileName,
-    filePath: input.filePath,
-    fileSize: input.fileSize,
+    ...(input.fileName ? { fileName: input.fileName } : {}),
+    ...(input.filePath ? { filePath: input.filePath } : {}),
+    ...(input.fileSize ? { fileSize: input.fileSize } : {}),
+    ...(input.link ? { link: input.link } : {}),
   });
 
   const admin = getAdminEmail();
@@ -107,17 +122,23 @@ export async function recordAndNotify(input: {
       timeStyle: "short",
       timeZone: "America/Los_Angeles",
     });
+    const detail = input.link
+      ? `They submitted a shared link:\n${input.link}\n\n(Also shown in the admin dashboard.)`
+      : `Open the admin dashboard to view or download the file — it is not attached to this email.`;
     await sendMail({
       to: admin,
       bcc: getAdminBcc() || undefined,
       replyTo: input.email,
       subject: `New assignment submission: ${input.assignment} — ${input.name}`,
-      text: `${input.name} (${input.email}) submitted the assignment "${input.assignment}".\n\nReceived: ${when} (Los Angeles time)\n\nOpen the admin dashboard to view or download the file — it is not attached to this email.`,
+      text: `${input.name} (${input.email}) submitted the assignment "${input.assignment}".\n\nReceived: ${when} (Los Angeles time)\n\n${detail}`,
     }).catch((e) => console.error("[submit] admin email failed", e));
   }
+  const studentDetail = input.link
+    ? `Link: ${input.link}`
+    : `File: ${input.fileName}`;
   await sendMail({
     to: input.email,
     subject: `Submission received: ${input.assignment} — HPRI Summer Fellows`,
-    text: `Hi ${input.name},\n\nWe have received your submission for "${input.assignment}". Thank you!\n\nFile: ${input.fileName}\n\n— HPRI Summer Fellows Program`,
+    text: `Hi ${input.name},\n\nWe have received your submission for "${input.assignment}". Thank you!\n\n${studentDetail}\n\n— HPRI Summer Fellows Program`,
   }).catch((e) => console.error("[submit] confirmation email failed", e));
 }

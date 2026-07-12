@@ -96,6 +96,7 @@ export default async function AdminDashboard() {
                 fileName: s.fileName,
                 filePath: s.filePath,
                 fileSize: s.fileSize,
+                link: s.link,
                 createdAt: s.createdAt,
               }))}
             />
@@ -263,7 +264,21 @@ export default async function AdminDashboard() {
 }
 
 function fileCell(s: Submission) {
-  if (!s.filePath) return <span className="text-neutral-400">—</span>;
+  if (!s.filePath) {
+    if (s.link) {
+      return (
+        <a
+          href={s.link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-medium text-cardinal underline"
+        >
+          Shared link ↗
+        </a>
+      );
+    }
+    return <span className="text-neutral-400">—</span>;
+  }
   const name = s.filePath.replace(/^uploads\//, "");
   return (
     <a

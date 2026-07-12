@@ -12,6 +12,7 @@ export type SubmissionItem = {
   fileName?: string;
   filePath?: string;
   fileSize?: number;
+  link?: string;
   createdAt: string;
 };
 
@@ -114,6 +115,15 @@ export function SubmissionsList({ submissions }: { submissions: SubmissionItem[]
                           ({fmtSize(s.fileSize)})
                         </span>
                       ) : null}
+                    </a>
+                  ) : s.link ? (
+                    <a
+                      href={s.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-md bg-cardinal px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-cardinal-dark"
+                    >
+                      Open shared link ↗
                     </a>
                   ) : (
                     <span className="text-xs text-neutral-400">No file attached</span>
