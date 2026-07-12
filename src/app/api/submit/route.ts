@@ -1,35 +1,28 @@
 import { NextResponse } from "next/server";
 import fs from "node:fs";
 import path from "node:path";
-import { addSubmission } from "@/lib/store";
 import { getBucket } from "@/lib/firebase";
-import { getContent, submissionState } from "@/lib/content";
-import { sendMail, getAdminEmail, getAdminBcc } from "@/lib/email";
+import {
+  isEmail,
+  extOf,
+  ALLOWED_EXT,
+  VIDEO_EXTS,
+  CONTENT_TYPE,
+  limitFor,
+  tooLargeMessage,
+  assignmentOpen,
+  storedPathFor,
+  recordAndNotify,
+} from "@/lib/uploads";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const MAX_DOC_BYTES = 20 * 1024 * 1024;   // 20 MB for documents
-const MAX_VIDEO_BYTES = 500 * 1024 * 1024; // 500 MB for video
-const DOC_EXTS = new Set([".pdf", ".doc", ".docx"]);
-const VIDEO_EXTS = new Set([".mp4", ".mov", ".webm"]);
-const ALLOWED_EXT = [".pdf", ".doc", ".docx", ".mp4", ".mov", ".webm"];
-const CONTENT_TYPE: Record<string, string> = {
-  ".pdf": "application/pdf",
-  ".doc": "application/msword",
-  ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  ".mp4": "video/mp4",
-  ".mov": "video/quicktime",
-  ".webm": "video/webm",
-};
-
-function isEmail(v: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
-}
-
-function safe(s: string) {
-  return s.replace(/[^a-z0-9._-]+/gi, "_").slice(0, 60) || "file";
-}
+// Fallback upload path: the whole file is posted to the server, which stores it
+// in the bucket (or on local disk when Firebase isn't configured). Production
+// uses the direct-to-Storage flow (/api/submit/sign + /finalize) instead, which
+// avoids the ~32 MB Cloud Run request-body limit for large videos. This route
+// stays for local/self-host and as a belt-and-suspenders fallback.
 
 // Duck-typed File check (avoids relying on a global File constructor on Node 18).
 function isUpload(f: FormDataEntryValue | null): f is File {
@@ -69,14 +62,8 @@ export async function POST(req: Request) {
       );
     }
 
-    // Enforce the admin's per-assignment gate server-side: even if a stale page
-    // or crafted request reaches us, reject uploads for assignments that the
-    // admin has not opened for submission.
-    const content = await getContent();
-    const target = content.assignments.rows.find(
-      (r) => r.assignment === assignment,
-    );
-    if (!target || submissionState(target) !== "open") {
+    // Enforce the admin's per-assignment gate server-side.
+    if (!(await assignmentOpen(assignment))) {
       return NextResponse.json(
         { ok: false, error: "Submissions for this assignment aren't open right now." },
         { status: 403 },
@@ -89,31 +76,33 @@ export async function POST(req: Request) {
         { status: 400 },
       );
     }
-    const ext = path.extname(file.name).toLowerCase();
+    const ext = extOf(file.name);
     if (!ALLOWED_EXT.includes(ext)) {
       return NextResponse.json(
-        { ok: false, error: "Only PDF, Word (.pdf, .doc, .docx) or video (.mp4, .mov, .webm) files are allowed." },
+        {
+          ok: false,
+          error:
+            "Only PDF, Word (.pdf, .doc, .docx) or video (.mp4, .mov, .webm) files are allowed.",
+        },
         { status: 400 },
       );
     }
     const isVideo = VIDEO_EXTS.has(ext);
-    const maxBytes = isVideo ? MAX_VIDEO_BYTES : MAX_DOC_BYTES;
-    if (file.size > maxBytes) {
+    if (file.size > limitFor(ext)) {
       return NextResponse.json(
-        { ok: false, error: isVideo ? "Video is too large (maximum 500 MB)." : "File is too large (maximum 20 MB)." },
+        { ok: false, error: tooLargeMessage(ext) },
         { status: 400 },
       );
     }
 
-    // Store uploads privately (never under /public) so they aren't publicly
-    // downloadable — the admin dashboard serves them through an authenticated
-    // route. With Firebase configured the bytes go to the bucket's "uploads/"
-    // prefix; otherwise to data/uploads on local disk (self-hosting).
-    const stored = `${Date.now()}_${safe(name)}_${safe(assignment)}${ext}`;
+    // Store uploads privately (never under /public). With Firebase configured the
+    // bytes go to the bucket's "uploads/" prefix; otherwise to data/uploads on
+    // local disk (self-hosting).
+    const stored = storedPathFor(name, assignment, ext);
     const bytes = Buffer.from(await file.arrayBuffer());
     const bucket = getBucket();
     if (bucket) {
-      await bucket.file(`uploads/${stored}`).save(bytes, {
+      await bucket.file(stored).save(bytes, {
         resumable: isVideo,
         contentType: CONTENT_TYPE[ext] || "application/octet-stream",
         metadata: { cacheControl: "private, no-store" },
@@ -121,40 +110,18 @@ export async function POST(req: Request) {
     } else {
       const uploadsDir = path.join(process.cwd(), "data", "uploads");
       fs.mkdirSync(uploadsDir, { recursive: true });
-      fs.writeFileSync(path.join(uploadsDir, stored), bytes);
+      fs.writeFileSync(path.join(uploadsDir, stored.replace(/^uploads\//, "")), bytes);
     }
 
-    await addSubmission({
-      kind: "assignment",
+    await recordAndNotify({
       name,
       email,
-      subject: assignment,
-      message: note,
+      assignment,
+      note,
       fileName: file.name,
-      filePath: `uploads/${stored}`,
+      filePath: stored,
       fileSize: file.size,
     });
-
-    const admin = getAdminEmail();
-    if (admin) {
-      const when = new Date().toLocaleString("en-US", {
-        dateStyle: "medium",
-        timeStyle: "short",
-        timeZone: "America/Los_Angeles",
-      });
-      await sendMail({
-        to: admin,
-        bcc: getAdminBcc() || undefined,
-        replyTo: email,
-        subject: `New assignment submission: ${assignment} — ${name}`,
-        text: `${name} (${email}) submitted the assignment "${assignment}".\n\nReceived: ${when} (Los Angeles time)\n\nOpen the admin dashboard to view or download the file — it is not attached to this email.`,
-      }).catch((e) => console.error("[submit] admin email failed", e));
-    }
-    await sendMail({
-      to: email,
-      subject: `Submission received: ${assignment} — HPRI Summer Fellows`,
-      text: `Hi ${name},\n\nWe have received your submission for "${assignment}". Thank you!\n\nFile: ${file.name}\n\n— HPRI Summer Fellows Program`,
-    }).catch((e) => console.error("[submit] confirmation email failed", e));
 
     return NextResponse.json({ ok: true });
   } catch (e) {

@@ -8,6 +8,61 @@ const inputClass =
 
 type Status = "idle" | "submitting" | "success" | "error";
 
+// PUT/POST a body with real upload-progress reporting. Native fetch() can't
+// report upload progress, so we use XMLHttpRequest.
+function xhrSend(
+  method: string,
+  url: string,
+  body: XMLHttpRequestBodyInit,
+  contentType: string | undefined,
+  onProgress: (pct: number) => void,
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.upload.addEventListener("progress", (ev) => {
+      if (ev.lengthComputable) onProgress(Math.round((ev.loaded / ev.total) * 100));
+    });
+    xhr.addEventListener("load", () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve();
+        return;
+      }
+      // Our own endpoints return JSON with an error; Cloud Storage returns XML.
+      let msg = "Upload failed. Please try again.";
+      try {
+        const j = JSON.parse(xhr.responseText) as { error?: string };
+        if (j?.error) msg = j.error;
+      } catch {
+        /* non-JSON (e.g. Storage XML) — keep the generic message */
+      }
+      reject(new Error(msg));
+    });
+    xhr.addEventListener("error", () =>
+      reject(new Error("Network error. Please try again.")),
+    );
+    xhr.open(method, url);
+    if (contentType) xhr.setRequestHeader("Content-Type", contentType);
+    xhr.send(body);
+  });
+}
+
+async function postJson(url: string, data: unknown) {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  const json = (await res.json().catch(() => ({}))) as {
+    ok?: boolean;
+    error?: string;
+    [k: string]: unknown;
+  };
+  if (!res.ok || !json.ok) {
+    throw new Error(json.error || "Something went wrong. Please try again.");
+  }
+  return json;
+}
+
 export function AssignmentForm({
   assignments,
   defaultAssignment = "",
@@ -24,30 +79,71 @@ export function AssignmentForm({
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget;
+    const fd = new FormData(form);
+
+    const company = String(fd.get("company") || "").trim();
+    const name = String(fd.get("name") || "").trim();
+    const email = String(fd.get("email") || "").trim();
+    const assignment = String(fd.get("assignment") || "").trim();
+    const note = String(fd.get("note") || "").trim();
+    const file = fd.get("file");
+    const isFile =
+      !!file && typeof file === "object" && "size" in file && "name" in file;
+
+    if (!isFile || (file as File).size === 0) {
+      setStatus("error");
+      setError("Please attach your file.");
+      return;
+    }
+    const upload = file as File;
+
     setStatus("submitting");
     setProgress(0);
     setError("");
     try {
-      await new Promise<void>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.upload.addEventListener("progress", (ev) => {
-          if (ev.lengthComputable) setProgress(Math.round((ev.loaded / ev.total) * 100));
-        });
-        xhr.addEventListener("load", () => {
-          try {
-            const json = JSON.parse(xhr.responseText) as { ok: boolean; error?: string };
-            if (xhr.status >= 200 && xhr.status < 300 && json.ok) resolve();
-            else reject(new Error(json.error || "Could not submit your file."));
-          } catch {
-            reject(new Error("Could not submit your file."));
-          }
-        });
-        xhr.addEventListener("error", () =>
-          reject(new Error("Network error. Please try again.")),
-        );
-        xhr.open("POST", "/api/submit");
-        xhr.send(new FormData(form));
+      // 1) Ask the server for a signed upload URL (a tiny JSON request).
+      const sign = await postJson("/api/submit/sign", {
+        company,
+        name,
+        email,
+        assignment,
+        fileName: upload.name,
+        fileSize: upload.size,
       });
+
+      if (sign.mode === "noop") {
+        // Honeypot tripped server-side — behave like a normal success.
+        setStatus("success");
+        setProgress(null);
+        form.reset();
+        onSuccess?.();
+        return;
+      }
+
+      if (sign.mode === "direct") {
+        // No Storage configured (local/self-host): post the whole form instead.
+        await xhrSend("POST", "/api/submit", fd, undefined, setProgress);
+      } else {
+        // 2) Upload the bytes straight to Cloud Storage (skips our server).
+        await xhrSend(
+          "PUT",
+          String(sign.url),
+          upload,
+          String(sign.contentType),
+          setProgress,
+        );
+        // 3) Tell the server the upload finished → record it + send emails.
+        await postJson("/api/submit/finalize", {
+          name,
+          email,
+          assignment,
+          note,
+          path: sign.path,
+          token: sign.token,
+          fileName: upload.name,
+        });
+      }
+
       setStatus("success");
       setProgress(null);
       form.reset();
@@ -147,7 +243,7 @@ export function AssignmentForm({
       {status === "submitting" && progress !== null ? (
         <div>
           <div className="mb-1 flex items-center justify-between text-xs text-neutral-600">
-            <span>Uploading…</span>
+            <span>{progress < 100 ? "Uploading…" : "Finishing up…"}</span>
             <span className="font-semibold">{progress}%</span>
           </div>
           <div className="h-2 w-full overflow-hidden rounded-full bg-neutral-200">
