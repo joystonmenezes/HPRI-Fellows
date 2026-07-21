@@ -25,6 +25,11 @@ export type Submission = {
   // (e.g. a Google Drive video) rather than uploading the file directly.
   link?: string;
   createdAt: string;
+  // Grading workflow (admin-only). Several staff grade submissions, so we track
+  // whether an item has been graded and who marked it — surfaced in the
+  // dashboard's per-submission grading controls. Absent means not yet graded.
+  graded?: boolean;
+  gradedBy?: string;
   // Set to an ISO timestamp when the item is moved to "Recently Deleted".
   // Absent/null means active. Soft-deleting keeps the row and any uploaded file
   // so it can be restored; only a permanent delete removes them.
@@ -158,6 +163,37 @@ export async function softDeleteSubmission(id: number): Promise<boolean> {
 // Restore a soft-deleted submission back into the active lists.
 export async function restoreSubmission(id: number): Promise<boolean> {
   return setDeletedAt(id, null);
+}
+
+// Update a submission's grading status: whether it has been graded and who
+// marked it. Only the fields actually provided are written, so an undefined
+// stays untouched. gradedBy is trimmed and length-capped. Returns false if no
+// submission matches the id.
+export async function setSubmissionGrading(
+  id: number,
+  patch: { graded?: boolean; gradedBy?: string },
+): Promise<boolean> {
+  const update: { graded?: boolean; gradedBy?: string } = {};
+  if (typeof patch.graded === "boolean") update.graded = patch.graded;
+  if (typeof patch.gradedBy === "string") {
+    update.gradedBy = patch.gradedBy.trim().slice(0, 80);
+  }
+  if (Object.keys(update).length === 0) return false;
+
+  const db = getDb();
+  if (db) {
+    const snap = await db.collection(COLLECTION).where("id", "==", id).get();
+    if (snap.empty) return false;
+    for (const doc of snap.docs) {
+      await doc.ref.update(update);
+    }
+    return true;
+  }
+
+  const all = readFile();
+  if (!all.some((s) => s.id === id)) return false;
+  writeFile(all.map((s) => (s.id === id ? { ...s, ...update } : s)));
+  return true;
 }
 
 async function setDeletedAt(id: number, value: string | null): Promise<boolean> {

@@ -13,7 +13,11 @@ function cell(value: unknown): string {
   return `"${s.replace(/"/g, '""')}"`;
 }
 
-const COLUMNS: { key: string; label: string }[] = [
+const COLUMNS: {
+  key: string;
+  label: string;
+  format?: (v: unknown) => string;
+}[] = [
   { key: "id", label: "ID" },
   { key: "createdAt", label: "Received" },
   { key: "kind", label: "Type" },
@@ -24,6 +28,8 @@ const COLUMNS: { key: string; label: string }[] = [
   { key: "fileName", label: "File name" },
   { key: "fileSize", label: "File size (bytes)" },
   { key: "link", label: "Link" },
+  { key: "graded", label: "Graded", format: (v) => (v ? "Yes" : "No") },
+  { key: "gradedBy", label: "Graded by" },
 ];
 
 export async function GET(req: Request) {
@@ -34,7 +40,12 @@ export async function GET(req: Request) {
   const rows = await listSubmissions();
   const header = COLUMNS.map((c) => cell(c.label)).join(",");
   const body = rows
-    .map((r) => COLUMNS.map((c) => cell((r as Record<string, unknown>)[c.key])).join(","))
+    .map((r) =>
+      COLUMNS.map((c) => {
+        const raw = (r as Record<string, unknown>)[c.key];
+        return cell(c.format ? c.format(raw) : raw);
+      }).join(","),
+    )
     .join("\r\n");
   // Leading BOM so Excel reads UTF-8 (accented names, em dashes) correctly.
   const csv = `﻿${header}\r\n${body}\r\n`;

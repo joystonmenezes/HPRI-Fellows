@@ -98,6 +98,8 @@ export default async function AdminDashboard() {
                 fileSize: s.fileSize,
                 link: s.link,
                 createdAt: s.createdAt,
+                graded: s.graded,
+                gradedBy: s.gradedBy,
               }))}
             />
           )}
