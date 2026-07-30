@@ -85,7 +85,7 @@ export default async function AdminContentPage() {
     },
     capstonePresentations: {
       anchor: "capstonePresentations",
-      nav: "Capstone Presentations",
+      nav: "2026 Capstone Presentations",
       node: (
         <CapstonePresentationsEditor initial={c.capstonePresentations} />
       ),

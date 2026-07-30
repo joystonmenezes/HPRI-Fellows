@@ -381,7 +381,7 @@ export default async function Home() {
     capstonePresentations: (
       <Section
         id="capstonePresentations"
-        title="Capstone Presentations"
+        title="2026 Capstone Presentations"
         intro={capstonePresentations.intro}
       >
         {publishedCapstonePresentations.length ? (

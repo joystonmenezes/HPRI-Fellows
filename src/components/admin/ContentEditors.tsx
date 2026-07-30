@@ -2519,7 +2519,7 @@ export function CapstonePresentationsEditor({
       }}
       id="capstonePresentations"
     >
-      <SectionHeading title="Capstone Presentations" count={rows.length} />
+      <SectionHeading title="2026 Capstone Presentations" count={rows.length} />
       <p className={sectionLead}>
         The students’ final capstone presentations. Each one needs a project
         title and a shareable link (e.g. a Google Drive or Slides link) that
