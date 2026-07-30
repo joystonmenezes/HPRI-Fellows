@@ -385,35 +385,34 @@ export default async function Home() {
         intro={capstonePresentations.intro}
       >
         {publishedCapstonePresentations.length ? (
-          <div className="grid gap-4 sm:grid-cols-2">
+          <ul className="divide-y divide-neutral-200 overflow-hidden rounded-lg border border-neutral-200 bg-white">
             {publishedCapstonePresentations.map((p, i) => (
-              <div
-                key={i}
-                className="flex flex-col rounded-lg border border-neutral-200 bg-white p-4 shadow-sm"
-              >
-                <h3 className="font-semibold text-neutral-900">{p.title}</h3>
-                {p.members ? (
-                  <p className="mt-1 text-sm text-neutral-600">{p.members}</p>
-                ) : null}
-                <div className="mt-4 pt-1">
+              <li key={i} className="px-4 py-3">
+                <div className="flex items-start justify-between gap-3">
+                  <h3 className="min-w-0 font-semibold text-neutral-900">
+                    {p.title}
+                  </h3>
                   {p.url ? (
                     <a
                       href={p.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-md bg-cardinal px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-cardinal-dark"
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-cardinal px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-cardinal-dark"
                     >
                       Open presentation ↗
                     </a>
                   ) : (
-                    <span className="text-xs text-neutral-400">
+                    <span className="shrink-0 text-xs text-neutral-400">
                       Link coming soon
                     </span>
                   )}
                 </div>
-              </div>
+                {p.members ? (
+                  <p className="mt-1 text-sm text-neutral-600">{p.members}</p>
+                ) : null}
+              </li>
             ))}
-          </div>
+          </ul>
         ) : (
           <p className="text-sm text-neutral-500">
             Capstone presentations will be posted here soon.
