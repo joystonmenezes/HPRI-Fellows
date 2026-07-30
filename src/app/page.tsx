@@ -46,6 +46,7 @@ export default async function Home() {
     activities,
     assignments,
     capstone,
+    capstonePresentations,
     recommendedReadings,
     contacts,
     citi,
@@ -56,6 +57,9 @@ export default async function Home() {
   const schedule = presentations.schedule.filter((s) => s.published !== false);
   const publishedReadings = recommendedReadings.rows.filter(
     (r) => r.published !== false,
+  );
+  const publishedCapstonePresentations = capstonePresentations.rows.filter(
+    (p) => p.published !== false,
   );
   const mentorRows = mentors.rows.filter((m) => m.published !== false);
   const activityRows = activities.rows.filter((a) => a.published !== false);
@@ -372,6 +376,49 @@ export default async function Home() {
             <ActionLink link={capstone.slideLink} />
           )}
         </div>
+      </Section>
+    ),
+    capstonePresentations: (
+      <Section
+        id="capstonePresentations"
+        title="Capstone Presentations"
+        intro={capstonePresentations.intro}
+      >
+        {publishedCapstonePresentations.length ? (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {publishedCapstonePresentations.map((p, i) => (
+              <div
+                key={i}
+                className="flex flex-col rounded-lg border border-neutral-200 bg-white p-4 shadow-sm"
+              >
+                <h3 className="font-semibold text-neutral-900">{p.title}</h3>
+                {p.members ? (
+                  <p className="mt-1 text-sm text-neutral-600">{p.members}</p>
+                ) : null}
+                <div className="mt-4 pt-1">
+                  {p.url ? (
+                    <a
+                      href={p.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-md bg-cardinal px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-cardinal-dark"
+                    >
+                      Open presentation ↗
+                    </a>
+                  ) : (
+                    <span className="text-xs text-neutral-400">
+                      Link coming soon
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-neutral-500">
+            Capstone presentations will be posted here soon.
+          </p>
+        )}
       </Section>
     ),
     readings: (

@@ -83,6 +83,12 @@ export type SiteContent = {
     slideLink: Link;
     published: boolean;
   };
+  // Capstone Presentations: the students' final presentations. Each is a project
+  // title + team members + a shareable Drive link that opens in a new tab.
+  capstonePresentations: {
+    intro: string;
+    rows: { title: string; members: string; url: string; published: boolean }[];
+  };
   // Recommended Readings: a short list of title + URL links.
   recommendedReadings: {
     intro: string;
@@ -170,6 +176,7 @@ export function defaultContent(): SiteContent {
       slideLink: { label: "Slide template", published: true },
       published: true,
     },
+    capstonePresentations: { intro: "", rows: [] },
     recommendedReadings: { intro: "", rows: [] },
     contacts: {
       rows: program.contacts.rows.map((c) => ({ ...c, published: true })),
@@ -413,6 +420,31 @@ function cleanAssignments(v: unknown): AssignmentRow[] {
     .slice(0, 200);
 }
 
+function cleanCapstonePresentations(
+  v: unknown,
+): { title: string; members: string; url: string; published: boolean }[] {
+  if (!Array.isArray(v)) return [];
+  return v
+    .map((x) => {
+      const r = x as {
+        title?: unknown;
+        members?: unknown;
+        url?: unknown;
+        published?: unknown;
+      };
+      return {
+        title: clampStr(r.title, 300).trim(),
+        members: clampStr(r.members, 600).trim(),
+        // safeHref returns undefined for empty/invalid; store "" so Firestore
+        // (which rejects undefined) is happy.
+        url: safeHref(r.url) ?? "",
+        published: pub(r.published),
+      };
+    })
+    .filter((r) => r.title.length > 0)
+    .slice(0, 200);
+}
+
 function cleanReadings(
   v: unknown,
 ): { title: string; url: string; published: boolean }[] {
@@ -570,6 +602,16 @@ function mergeContent(d: SiteContent, s: Partial<SiteContent>): SiteContent {
           published: pub(s.capstone.published),
         }
       : d.capstone,
+    capstonePresentations: s.capstonePresentations
+      ? {
+          intro: has(s.capstonePresentations.intro)
+            ? clampStr(s.capstonePresentations.intro, 4000).trim()
+            : d.capstonePresentations.intro,
+          rows: Array.isArray(s.capstonePresentations.rows)
+            ? cleanCapstonePresentations(s.capstonePresentations.rows)
+            : d.capstonePresentations.rows,
+        }
+      : d.capstonePresentations,
     recommendedReadings: s.recommendedReadings
       ? {
           intro: has(s.recommendedReadings.intro)
@@ -728,6 +770,11 @@ export async function saveContent(patch: Partial<SiteContent>): Promise<SiteCont
       guideLink: cleanPubLink(patch.capstone?.guideLink ?? {}),
       slideLink: cleanPubLink(patch.capstone?.slideLink ?? {}),
       published: pub(patch.capstone?.published),
+    };
+  if ("capstonePresentations" in patch)
+    clean.capstonePresentations = {
+      intro: clampStr(patch.capstonePresentations?.intro, 4000).trim(),
+      rows: cleanCapstonePresentations(patch.capstonePresentations?.rows),
     };
   if ("recommendedReadings" in patch)
     clean.recommendedReadings = {

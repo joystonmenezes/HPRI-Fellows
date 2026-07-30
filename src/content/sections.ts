@@ -17,6 +17,7 @@ export const SECTION_KEYS = [
   "activities",
   "submit",
   "capstone",
+  "capstonePresentations",
   "readings",
   "contacts",
 ] as const;
@@ -34,6 +35,7 @@ export const SECTION_LABELS: Record<SectionKey, string> = {
   activities: "Self-Directed Activities",
   submit: "Submit Assignments",
   capstone: "Capstone Project",
+  capstonePresentations: "Capstone Presentations",
   readings: "Recommended Readings",
   contacts: "Contacts & Addresses",
 };
@@ -52,6 +54,7 @@ export const SECTION_NAV_LABELS: Partial<Record<SectionKey, string>> = {
   activities: "Self-Directed Activity",
   submit: "Submit Assignments",
   capstone: "Capstone Project",
+  capstonePresentations: "Capstone Presentations",
   readings: "Recommended Readings",
   contacts: "Important Contacts",
 };

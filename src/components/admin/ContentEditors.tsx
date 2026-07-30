@@ -2466,6 +2466,160 @@ export function RecommendedReadingsEditor({
   );
 }
 
+// ── Capstone Presentations ──────────────────────────────────────────────────
+
+type CapstonePresR = {
+  title: string;
+  members: string;
+  url: string;
+  published: boolean;
+};
+
+export function CapstonePresentationsEditor({
+  initial,
+}: {
+  initial: {
+    intro: string;
+    rows: { title: string; members: string; url: string; published?: boolean }[];
+  };
+}) {
+  const [intro, setIntro] = useState(initial.intro);
+  const [rows, setRows] = useState<CapstonePresR[]>(
+    initial.rows.map((r) => ({
+      title: r.title,
+      members: r.members,
+      url: r.url,
+      published: r.published !== false,
+    })),
+  );
+  const { status, error, setStatus, save } = useSaver();
+  const touch = () => setStatus("idle");
+  const setRow = (i: number, patch: Partial<CapstonePresR>) => {
+    setRows((rs) => rs.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
+    touch();
+  };
+  const drag = useDragReorder((from, to) => {
+    setRows((rs) => reorder(rs, from, to));
+    touch();
+  });
+
+  return (
+    <CollapsibleForm
+      onSubmit={(e) => {
+        e.preventDefault();
+        const clean = rows
+          .map((r) => ({
+            title: r.title.trim(),
+            members: r.members.trim(),
+            url: r.url.trim(),
+            published: r.published,
+          }))
+          .filter((r) => r.title);
+        save({ capstonePresentations: { intro: intro.trim(), rows: clean } });
+      }}
+      id="capstonePresentations"
+    >
+      <SectionHeading title="Capstone Presentations" count={rows.length} />
+      <p className={sectionLead}>
+        The students’ final capstone presentations. Each one needs a project
+        title and a shareable link (e.g. a Google Drive or Slides link) that
+        opens in a new tab; add the team members too. Drag a card by its handle
+        to reorder; uncheck “Published” to hide one without deleting it.
+      </p>
+      <div className="mt-4">
+        <label className={labelClass}>
+          Intro <span className="font-normal text-neutral-400">(optional)</span>
+        </label>
+        <textarea
+          rows={2}
+          className={inputClass}
+          value={intro}
+          onChange={(e) => {
+            setIntro(e.target.value);
+            touch();
+          }}
+        />
+      </div>
+      <div className="mt-4 space-y-3">
+        {rows.map((r, i) => (
+          <div
+            key={i}
+            {...drag.rowProps(i)}
+            className={`rounded-md border border-neutral-200 p-3 transition ${dragState(drag, i)}`}
+          >
+            <div className="flex items-center gap-2">
+              <DragHandle {...drag.handleProps(i)} />
+              <span className="text-xs font-semibold text-neutral-500">
+                Presentation {i + 1}
+              </span>
+            </div>
+            <div className="mt-2 space-y-2">
+              <div>
+                <label className={labelClass}>Project title</label>
+                <input
+                  className={inputClass}
+                  value={r.title}
+                  onChange={(e) => setRow(i, { title: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>Team members</label>
+                <input
+                  className={inputClass}
+                  value={r.members}
+                  placeholder="e.g. Alex Chen, Priya Rao, Sam Lee"
+                  onChange={(e) => setRow(i, { members: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>
+                  Presentation link (opens in a new tab)
+                </label>
+                <input
+                  className={inputClass}
+                  value={r.url}
+                  placeholder="https://drive.google.com/…"
+                  onChange={(e) => setRow(i, { url: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="mt-3 flex items-center justify-between">
+              <PublishToggle
+                checked={r.published}
+                onChange={(v) => setRow(i, { published: v })}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setRows((rs) => rs.filter((_, idx) => idx !== i));
+                  touch();
+                }}
+                className="rounded-md border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 transition hover:bg-red-50"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={() => {
+          setRows((rs) => [
+            ...rs,
+            { title: "", members: "", url: "", published: true },
+          ]);
+          touch();
+        }}
+        className={`${btnGhost} mt-3`}
+      >
+        + Add presentation
+      </button>
+      <SaveBar status={status} error={error} />
+    </CollapsibleForm>
+  );
+}
+
 // ── Contacts & addresses ────────────────────────────────────────────────────
 
 type ContactR = {

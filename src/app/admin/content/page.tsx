@@ -17,6 +17,7 @@ import {
   ActivitiesEditor,
   AssignmentsEditor,
   CapstoneEditor,
+  CapstonePresentationsEditor,
   RecommendedReadingsEditor,
   ContactsEditor,
   CitiEditor,
@@ -81,6 +82,13 @@ export default async function AdminContentPage() {
       anchor: "capstone",
       nav: "Capstone",
       node: <CapstoneEditor initial={c.capstone} />,
+    },
+    capstonePresentations: {
+      anchor: "capstonePresentations",
+      nav: "Capstone Presentations",
+      node: (
+        <CapstonePresentationsEditor initial={c.capstonePresentations} />
+      ),
     },
     readings: {
       anchor: "readings",
